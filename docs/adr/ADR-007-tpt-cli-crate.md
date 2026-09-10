@@ -5,7 +5,7 @@
 
 ## Contexto
 
-La visión original mencionaba `tpt-cli` para reportes e import, pero el plan de crates solo contemplaba `tpt-core`/`tpt-daemon`/`tpt-tui`. El usuario quiere además poder **ajustar e identificar tiempo por comando** sin abrir la TUI, y el daemon debe mantener el presupuesto <15 MB RAM sin arrastrar dependencias de reporte/import.
+La visión original mencionaba `tpt-cli` para reportes e import, pero el plan de crates solo contemplaba `tpt-core`/`tpt-daemon`/`tpt-tui`. El usuario quiere además poder **ajustar e identificar tiempo por comando** sin abrir la TUI, y el daemon debe mantener un consumo de memoria mínimo sin arrastrar dependencias de reporte/import.
 
 ## Decisión
 
