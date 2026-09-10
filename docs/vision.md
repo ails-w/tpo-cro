@@ -37,7 +37,7 @@
 | D16 | Extras: productivo vs distracción, media de sesión, switches, racha |
 | D17 | Retención modular por tiers (raw/hourly/daily) |
 | D18 | BTRFS: nodatacow + checkpoint + incremental_vacuum + snapshots excluidos |
-| D19 | Presets editables `25/5`, `50/10`, `52/17`, `90/15(20)`; corto ≤15, largo ≤20 |
+| D19 | Presets editables `25/5`, `50/10`, `52/15`, `90/15(20)`; corto ≤15, largo ≤20 (el clásico 52/17 queda clampado a 15) |
 | D20 | Docs: `docs/` + `phases.md` + `development-plan.md`; `diagrams/` opcional |
 
 ---
@@ -98,7 +98,7 @@
 *   **Cooldown de 5 minutos** visible en la TUI tras un aborto Focus *(D10)*.
 
 #### Presets de reloj (D19)
-*   Presets editables antes de iniciar: `25/5`, `50/10`, `52/17`, `90/15 (largo 20)`.
+*   Presets editables antes de iniciar: `25/5`, `50/10`, `52/15`, `90/15 (largo 20)`.
 *   **Regla dura:** descanso corto **≤15 min**, descanso largo **≤20 min**.
 
 ### 2.4. Gestión de Descansos Inteligentes (Fatigue Detection)
