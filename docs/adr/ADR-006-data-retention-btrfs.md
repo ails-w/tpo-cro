@@ -5,7 +5,7 @@
 
 ## Contexto
 
-El filesystem es BTRFS (CoW). SQLite en WAL sobre BTRFS sin configuración sufre write amplification por copy-on-write y fragmentación. Además `window_activity_logs` crecería sin límite, y los snapshots BTRFS de una DB con WAL activo son inconsistentes. El presupuesto <15 MB RAM exige lecturas eficientes.
+El filesystem es BTRFS (CoW). SQLite en WAL sobre BTRFS sin configuración sufre write amplification por copy-on-write y fragmentación. Además `window_activity_logs` crecería sin límite, y los snapshots BTRFS de una DB con WAL activo son inconsistentes. El objetivo de bajo consumo exige lecturas eficientes.
 
 ## Decisión
 
