@@ -5,7 +5,7 @@
 
 ## Contexto
 
-TPT depende del OS (Hyprland IPC, `/proc`, idle, SQLite, reloj). Si el dominio conoce esas dependencias, no es testeable sin Wayland/X11 y queda acoplado a Hyprland. Además el presupuesto <15 MB RAM exige que el proceso crítico no arrastre dependencias de UI/reporte.
+TPT depende del OS (Hyprland IPC, `/proc`, idle, SQLite, reloj). Si el dominio conoce esas dependencias, no es testeable sin Wayland/X11 y queda acoplado a Hyprland. Además el objetivo de bajo consumo exige que el proceso crítico no arrastre dependencias de UI/reporte.
 
 ## Decisión
 
