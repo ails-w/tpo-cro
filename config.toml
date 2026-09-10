@@ -1,11 +1,59 @@
+# TPT — Configuración por defecto/ejemplo
+
 [general]
 idle_timeout_seconds = 300
 db_path = "~/.local/share/tpt/metrics.db"
-socket_path = "/tmp/tpt.sock"
+socket_path = "$XDG_RUNTIME_DIR/tpt.sock"
+
+[timers]
+default_preset = "preset-25-5"
+max_short_break_minutes = 15
+max_long_break_minutes = 20
+cooldown_minutes = 5
+max_warnings_per_session = 2
+violation_grace_seconds = 180   # countdown 3-5 min tras aviso de app bloqueada
+
+[idle]
+warn_after_seconds = 300        # aviso informativo; NUNCA penaliza
+
+# Presets editables (D19). Regla dura: descanso corto <=15, largo <=20.
+# El clásico 52/17 queda clampado a descanso corto 15 (52-15).
+[[timer_presets]]
+name = "preset-25-5"
+work_minutes = 25
+short_break_minutes = 5
+long_break_minutes = 15
+cycles_before_long = 4
+
+[[timer_presets]]
+name = "preset-50-10"
+work_minutes = 50
+short_break_minutes = 10
+long_break_minutes = 20
+cycles_before_long = 2
+
+[[timer_presets]]
+name = "preset-52-15"
+work_minutes = 52
+short_break_minutes = 15
+long_break_minutes = 20
+cycles_before_long = 2
+
+[[timer_presets]]
+name = "preset-90-15"
+work_minutes = 90
+short_break_minutes = 15
+long_break_minutes = 20
+cycles_before_long = 1
 
 [fatigue]
 max_continuous_focus_minutes = 50
 break_duration_minutes = 10
+
+[retention]
+raw_events_days = 30
+hourly_aggregates_days = 90
+daily_aggregates_keep = true
 
 [[categories]]
 name = "Enfoque / Dev"
