@@ -1,7 +1,7 @@
 # 👁️ Documento de Visión y Especificación Funcional
 
 **Proyecto:** Terminal Productivity Tracker (`tpt`)  
-**Inspiración:** Fork conceptual de Rize.io (TUI / Local) + Sistema de Rutinas de Super Productivity  
+**Inspiración:** Monitor pasivo de tiempo y enfoque (local / TUI) + Sistema de Rutinas de Super Productivity  
 **Stack Core:** Rust, Arch Linux (Wayland/Hyprland), `ratatui` + `crossterm`, `rusqlite` (WAL mode)  
 **Estado:** Consolidado — decisiones D1–D20 (ver `docs/adr/`)
 
@@ -9,7 +9,7 @@
 
 ## 🚀 1. Propósito y Filosofía del Producto
 
-`tpt` es un monitor pasivo de tiempo, enfoque y fatiga diseñado para desarrolladores y power users de Linux. Su objetivo es replicar y adaptar la experiencia visual de **Rize.io** a un entorno **100% local, impulsado por terminal y con huella de memoria mínima (<15 MB RAM)**.
+`tpt` es un monitor pasivo de tiempo, enfoque y fatiga diseñado para desarrolladores y power users de Linux. Su objetivo es ofrecer un dashboard de productividad en terminal, **100% local**, con **huella de memoria mínima** (sin runtime async pesado) y control total por teclado.
 
 *   **Privacidad Absoluta:** Cero telemetría, cero sincronización en nube, cero capturas de pantalla, cero keylogging.
 *   **Minimalismo Eficiente:** Arquitectura desacoplada en Rust (Daemon en segundo plano sin runtime pesado + TUI cliente ejecutable a demanda + CLI de control).
@@ -60,7 +60,7 @@
     *   Al regresar, la TUI despliega un modal interrumpible: *"¿Monitoreo pausado: fue descanso o actividad offline?"*, permitiendo clasificar o descartar el bloque.
     *   **Suspensión (D5):** duraciones con reloj monotónico; el gap de suspensión se trata como idle/offline.
 
-### 2.2. Visualización y Gráficos (Dashboard Inspirado en Rize.io)
+### 2.2. Visualización y Gráficos (Dashboard de Productividad)
 
 1.  **Barra de Línea de Tiempo Diaria (24h Timeline Bar):**
     *   Barra horizontal continua con caracteres de bloque (`█`, `▓`, `▒`, `░`).
