@@ -1,6 +1,6 @@
 # TPT — Terminal Productivity Tracker
 
-> Passive time, focus and fatigue tracker for Linux power users — Rize.io experience, 100% local, terminal-first, <15 MB RAM.
+> Passive time, focus and fatigue tracker for Linux power users — 100% local, terminal-first, low memory footprint.
 
 ![Rust](https://img.shields.io/badge/Rust-1.80+-orange) ![License](https://img.shields.io/badge/license-MIT-green)
 
