@@ -257,7 +257,7 @@
 - **Pomodoro:** sin pausa; `+`/`-` (step/límites); abortar = reinicio de ciclos + sin racha + reflexión obligatoria + challenge; completado solo con tiempo productivo ≥ target.
 - **Focus:** contrato inmutable; abortar = crédito 0 + cooldown 5 min + challenge + reflexión obligatoria + impacto en métricas.
 - **Flowtime:** sesión variable, descanso proporcional, sin penalización.
-- Presets editables: `25/5`, `50/10`, `52/17`, `90/15(20)`; corto ≤15, largo ≤20.
+- Presets editables: `25/5`, `50/10`, `52/15`, `90/15(20)`; corto ≤15, largo ≤20 (52/17 clampado a 15).
 - Switch de tareas programadas en Pomodoro y Focus (sin penalización).
 - Cooldown 5 min visible (estado expuesto).
 - Estados: `COMPLETED`, `ABORTED_PENALIZED`, `ABORTED`, `IN_PROGRESS`, `SUSPENDED_IDLE`.
