@@ -33,7 +33,7 @@ Ver `docs/vision.md` (tabla D1–D20) y `docs/adr/`. Las críticas: D2 (hexagona
 - ⚠️ **BTRFS + SQLite**: sin `chattr +C` en el directorio de la DB hay write amplification por CoW. Aplicar antes de crear la DB.
 - ⚠️ **Idle sin libwayland**: la integración `ext-idle-notify-v1` debe ir tras `IdleSource`; evaluar helper `hypridle` o lectura de eventos Hyprland con fallback polling.
 - ⚠️ **Hyprland socket2**: ruta depende de `$HYPRLAND_INSTANCE_SIGNATURE`; manejar ausencia con degradación elegante.
-- ⚠️ **Presupuesto <15 MB RAM**: no agregar tokio ni dependencias pesadas al daemon; revisar cada crate en `Cargo.toml`.
+- ⚠️ **Bajo consumo de memoria**: no agregar tokio ni dependencias pesadas al daemon; revisar cada crate en `Cargo.toml` y medir el consumo real antes de declarar límites.
 - ℹ️ **Rama única `main`**: la regla de PR por fase se documenta; aplicará cuando exista remoto/ramas.
 
 ## Entorno
