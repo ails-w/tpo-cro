@@ -1,0 +1,36 @@
+[general]
+idle_timeout_seconds = 300
+db_path = "~/.local/share/tpt/metrics.db"
+socket_path = "/tmp/tpt.sock"
+
+[fatigue]
+max_continuous_focus_minutes = 50
+break_duration_minutes = 10
+
+[[categories]]
+name = "Enfoque / Dev"
+color_hex = "#50fa7b"
+is_productive = true
+
+[[categories]]
+name = "Distracción"
+color_hex = "#ff5555"
+is_productive = false
+
+[[rules]]
+category = "Enfoque / Dev"
+match_type = "regex"
+target = "class"
+pattern = "^(kitty|Alacritty|Code|neovim)$"
+
+[[rules]]
+category = "Enfoque / Dev"
+match_type = "pwd_prefix"
+target = "pwd"
+pattern = "/home/isaac/projects/"
+
+[[rules]]
+category = "Distracción"
+match_type = "regex"
+target = "title"
+pattern = ".*(YouTube|Reddit|Twitter|X).* "
