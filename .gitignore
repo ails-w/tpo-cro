@@ -1,0 +1,16 @@
+# Rust / Cargo
+/target
+**/*.rs.bk
+
+# Datos locales (SQLite)
+*.db
+*.db-wal
+*.db-shm
+
+# Logs
+*.log
+
+# Editor / OS
+.vscode/
+.idea/
+.DS_Store
