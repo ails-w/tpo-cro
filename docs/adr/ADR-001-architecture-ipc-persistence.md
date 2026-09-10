@@ -5,7 +5,7 @@
 
 ## Contexto
 
-El sistema requiere monitorear continuamente la actividad de ventanas, rutas ($PWD) e inactividad en Arch Linux (Hyprland), consumiendo menos de 15 MB de RAM. La interfaz TUI debe poder abrirse y cerrarse sin interrumpir el daemon de fondo.
+El sistema requiere monitorear continuamente la actividad de ventanas, rutas ($PWD) e inactividad en Arch Linux (Hyprland), con consumo de memoria mínimo. La interfaz TUI debe poder abrirse y cerrarse sin interrumpir el daemon de fondo.
 
 ## Decisión
 
@@ -34,13 +34,13 @@ El sistema requiere monitorear continuamente la actividad de ventanas, rutas ($P
 
 ## Alternativas consideradas
 
-- **Runtime async (tokio)**: overhead de memoria incompatible con el objetivo <15 MB.
+- **Runtime async (tokio)**: overhead de memoria incompatible con el objetivo de bajo consumo.
 - **IPC por HTTP/WebSocket**: superficie de autenticación innecesaria para un canal local.
 
 ## Consecuencias
 
 - Cero overhead de runtimes async pesados en el proceso crítico.
-- Consumo de RAM estimado: Daemon (~4-8 MB), TUI (~6-10 MB).
+- Consumo de memoria: se mide y documenta durante el desarrollo (Fase 10); no se declaran límites de antemano.
 - Facilidad de testeo en entornos CI/CD sin servidor X11/Wayland activo (adaptadores fake).
 
 ## Referencias
