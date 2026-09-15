@@ -13,6 +13,7 @@ Los ADR (*Architecture Decision Records*) registran las decisiones técnicas imp
 | `ADR-005-inactivity-and-blocklist.md` | Inactividad no penalizada + blocklist por tarea |
 | `ADR-006-data-retention-btrfs.md` | Retención modular y estrategia BTRFS |
 | `ADR-007-tpt-cli-crate.md` | Crate `tpt-cli` (control/report/import) |
+| `ADR-008-tracking-layers.md` | Modelo de tracking en 3 capas (categorización, asignación, blocklist) |
 
 ## Cuándo escribir un ADR
 

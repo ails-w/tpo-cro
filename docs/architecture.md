@@ -98,6 +98,20 @@ Hexagonal: el dominio NO depende del OS. Los adaptadores los implementan en `tpt
 
 ---
 
+## Modelo de Tracking — 3 Capas
+
+Tres responsabilidades separadas. Detalle y porqué → `ADR-008-tracking-layers.md`.
+
+| Capa | Pregunta | Dónde vive | Lista de apps |
+|------|----------|------------|---------------|
+| 1. Categorización (pasivo) | ¿productivo o distracción? | `config.toml` (`[[categories]]`, `[[rules]]`) | No — reglas globales |
+| 2. Asignación a tarea/proyecto | ¿a qué se acredita el tiempo? | `$PWD` (`/proc/<pid>/cwd`) o tarea activa | No |
+| 3. Blocklist (enforcement) | ¿qué NO puedo abrir en sesión? | `task_blocked_apps` (por tarea) | Sí — apps prohibidas |
+
+El daemon registra todo en `window_activity_logs`; el motor de relojes cuenta **observado vs productivo** (productivo = categorías `is_productive`, sin idle) y **no conoce apps**. La blocklist solo actúa durante una sesión activa.
+
+---
+
 ## Dependencias planificadas (Cargo)
 
 | Crate | Dependencias |
@@ -194,3 +208,4 @@ Resumen de decisiones — el detalle vive en `docs/adr/`.
 | Inactividad y blocklist | `ADR-005-inactivity-and-blocklist.md` |
 | Datos y BTRFS | `ADR-006-data-retention-btrfs.md` |
 | Crate `tpt-cli` | `ADR-007-tpt-cli-crate.md` |
+| Modelo de tracking en 3 capas | `ADR-008-tracking-layers.md` |
