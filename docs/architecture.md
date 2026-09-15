@@ -30,13 +30,13 @@
 
 ## Estructura de Carpetas
 
-> Estructura **OBJETIVO**. Los crates se crean en Fase 0 (ver `docs/phases.md` y `docs/handoff.md`).
+> Estructura **creada en Fase 0** (ver `docs/phases.md`). Los módulos internos de cada crate se agregan en las fases siguientes.
 
 ```
 tp-cro/
 ├── AGENTS.md                          # Contexto estático para agentes IA
 ├── README.md                          # Portafolio (inglés)
-├── Cargo.toml                         # Workspace manifest (Fase 0)
+├── Cargo.toml                         # Workspace manifest (edition 2024, resolver 3)
 ├── config.toml                        # Configuración por defecto/ejemplo
 ├── .gitignore
 │
@@ -76,7 +76,7 @@ tp-cro/
 │       └── tests/
 │
 ├── docs/                              # Documentación (ver docs/index.md)
-├── .github/workflows/ci.yml           # CI (Fase 0)
+├── .github/workflows/ci.yml           # CI (fmt + clippy + test)
 └── config/                            # (Fase 10) unit systemd, PKGBUILD
 ```
 

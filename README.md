@@ -2,7 +2,7 @@
 
 > Passive time, focus and fatigue tracker for Linux power users — 100% local, terminal-first, low memory footprint.
 
-![Rust](https://img.shields.io/badge/Rust-1.80+-orange) ![License](https://img.shields.io/badge/license-MIT-green)
+![Rust](https://img.shields.io/badge/Rust-1.85+-orange) ![License](https://img.shields.io/badge/license-MIT-green)
 
 ## Problem it solves
 
@@ -93,7 +93,7 @@ cargo run -p tpt-cli -- import --super-productivity ~/.config/superProductivity/
 
 ## Roadmap
 
-- [ ] Phase 0 — Workspace & CI
+- [x] Phase 0 — Workspace & CI
 - [ ] Phase 1 — Config & domain ports
 - [ ] Phase 2 — SQLite store
 - [ ] Phase 3 — Capture & categorization

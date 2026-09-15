@@ -17,7 +17,7 @@
 
 | # | Feature (fase) | Estado | Conceptos | Log |
 |---|----------------|--------|-----------|-----|
-| 0 | Setup: workspace + CI | ⏳ | `learning/phase-00-setup.md` | `progress-log/phase-00-setup.md` |
+| 0 | Setup: workspace + CI | ✅ | `learning/phase-00-setup.md` | `progress-log/phase-00-setup.md` |
 | 1 | Configuración y dominio (puertos) | ⏳ | `learning/phase-01-config.md` | `progress-log/phase-01-config.md` |
 | 2 | Store SQLite (esquema, WAL, retención) | ⏳ | `learning/phase-02-store.md` | `progress-log/phase-02-store.md` |
 | 3 | Captura y categorización (Hyprland, $PWD, regex) | ⏳ | `learning/phase-03-capture.md` | `progress-log/phase-03-capture.md` |
@@ -31,16 +31,16 @@
 
 ---
 
-## Fase 0 — Setup: workspace + CI ⏳
+## Fase 0 — Setup: workspace + CI ✅
 
 **Objetivo:** dejar lista la infraestructura del workspace Rust y el pipeline de CI.
 
 ### Scope
 
-- `Cargo.toml` workspace con crates skeleton: `tpt-core`, `tpt-daemon`, `tpt-tui`, `tpt-cli`.
-- Toolchain estable + `rust-toolchain.toml` (opcional).
+- `Cargo.toml` workspace con crates skeleton (`lib` + `bin`): `tpt-core`, `tpt-daemon`, `tpt-tui`, `tpt-cli`.
+- Rust estable (edition 2024, resolver 3, MSRV 1.85). Sin `rust-toolchain.toml` (no hay `rustup` en el entorno).
 - `.github/workflows/ci.yml` (fmt + clippy + test).
-- Convenciones de `Cargo.toml` por crate (edition, lints).
+- Convenciones de `Cargo.toml` por crate (edition, lints de workspace).
 
 ### Fuera de scope
 
@@ -48,26 +48,26 @@
 
 ### Conceptos de aprendizaje
 
-- [ ] Workspace multi-crate en Rust → `docs/learning/phase-00-setup.md`
-- [ ] `cargo clippy --all-targets -- -D warnings` como puerta → `docs/learning/phase-00-setup.md`
-- [ ] Lints de crate y edition → `docs/learning/phase-00-setup.md`
+- [x] Workspace multi-crate en Rust → `docs/learning/phase-00-setup.md`
+- [x] `cargo clippy --all-targets -- -D warnings` como puerta → `docs/learning/phase-00-setup.md`
+- [x] Lints de crate y edition → `docs/learning/phase-00-setup.md`
 
 ### Criterio de salida
 
-- [ ] `cargo build` compila los 4 crates.
-- [ ] `cargo test` corre al menos un test de humo por crate.
-- [ ] CI verde (fmt + clippy + test).
+- [x] `cargo build` compila los 4 crates.
+- [x] `cargo test` corre al menos un test de humo por crate.
+- [x] CI verde (fmt + clippy + test).
 
 ### Features (TDD)
 
 #### Feature 0.1: Workspace
-- [ ] Escribir test: `tpt_core_smoke_lib_exposes_version` (RED)
-- [ ] Crear `Cargo.toml` workspace + 4 crates skeleton (GREEN)
-- [ ] Refactorizar
+- [x] Escribir test: `tpt_core_smoke_lib_exposes_version` (RED)
+- [x] Crear `Cargo.toml` workspace + 4 crates skeleton (GREEN)
+- [x] Refactorizar
 
 #### Feature 0.2: CI
-- [ ] Crear `.github/workflows/ci.yml` (GREEN)
-- [ ] Verificar local: `cargo fmt --check` + `cargo clippy --all-targets -- -D warnings` + `cargo test`
+- [x] Crear `.github/workflows/ci.yml` (GREEN)
+- [x] Verificar local: `cargo fmt --check` + `cargo clippy --all-targets -- -D warnings` + `cargo test`
 
 ---
 

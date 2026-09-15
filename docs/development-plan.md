@@ -113,24 +113,15 @@ crates/
 
 ---
 
-## CI (GitHub Actions — Fase 0)
+## CI (GitHub Actions)
 
-```yaml
-# .github/workflows/ci.yml (objetivo)
-name: CI
-on: [push, pull_request]
-jobs:
-  test:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: dtolnay/rust-toolchain@stable
-        with:
-          components: rustfmt, clippy
-      - run: cargo fmt --check
-      - run: cargo clippy --all-targets -- -D warnings
-      - run: cargo test
-```
+Implementado en `.github/workflows/ci.yml` (Fase 0). Corre en cada push y PR, con caché de cargo (`Swatinem/rust-cache`):
+
+1. `cargo fmt --all --check`
+2. `cargo clippy --workspace --all-targets --locked -- -D warnings`
+3. `cargo test --workspace --all-targets --locked`
+
+La misma secuencia se corre local antes de cada commit (ver `AGENTS.md`).
 
 ---
 
@@ -186,4 +177,5 @@ tpt-cli status
 - Commits convencionales en inglés (ver `AGENTS.md`).
 - **Commit por feature** al cerrar cada feature TDD.
 - **PR por fase** al cumplir los criterios de salida de la fase (log + learning + handoff actualizados).
-- Hoy solo existe `main`; al haber remoto/más ramas (ej. `dev`), la PR se abre contra la rama correspondiente y este plan se actualiza.
+- Flujo por fase: rama `type/phase-N-...` desde `main`, un commit por feature, PR contra `main` al cerrar la fase.
+- Remoto: `origin` → `github.com:ails-w/tpo-cro` (rama `main`).
