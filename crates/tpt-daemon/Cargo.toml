@@ -1,0 +1,10 @@
+[package]
+name = "tpt-daemon"
+description = "Background daemon: OS adapters, tracking engine and persistence for TPT"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+
+[lints]
+workspace = true

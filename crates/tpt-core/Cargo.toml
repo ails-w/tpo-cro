@@ -1,0 +1,10 @@
+[package]
+name = "tpt-core"
+description = "Domain models, ports and rules for the Terminal Productivity Tracker"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+
+[lints]
+workspace = true

@@ -1,0 +1,10 @@
+[package]
+name = "tpt-cli"
+description = "Command-line control, reporting and import client for the Terminal Productivity Tracker"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+
+[lints]
+workspace = true
