@@ -48,5 +48,11 @@
 
 ## Pendientes
 
-- 🔴 **Definir niveles de estrictez y default** (único tema abierto). Propuesta en `ADR-004` §5.
 - Features 1.1 a 1.5 (dominio, config y puertos).
+- Fórmula de **Focus Quality** y umbral de "día trabajado" → Fase 8.
+
+### 2026-09-14 — Diseño del contrato (`ADR-004` + `ADR-002`)
+
+- **Descripción**: Cierre del diseño de sesiones y penalizaciones. Reescritos `ADR-004` y `ADR-002`; actualizados `config.toml`, `docs/phases.md` (Fases 4 y 5), `docs/vision.md` y `docs/handoff.md`.
+- **Decisiones**: gap a **7 min**; `L1` aborta a **35%** y `L2` a **25%** (lock inmediato); aborto **manual conserva crédito**, inactividad lo lleva a 0 solo en `L2` severo; **deuda de reparación** 5/8 min pagada con foco 1:1, +5 min/día, caducidad 15/7 días, cobro como entrada negativa; **refinanciación** = `+N%` de lo acreditado, acumulable con tope 40%; `L1`/`L2` son **presets de solo lectura** con `params_snapshot` + checksum; **Pomodoro** con N ciclos y salida libre en descanso o borde de ciclo.
+- **Tests**: N/A (diseño).

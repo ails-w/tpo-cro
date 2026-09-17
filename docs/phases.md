@@ -169,59 +169,78 @@
 
 ## Fase 4 — Motor de sesiones y contrato ⏳
 
-**Objetivo:** máquina de estados de Flowtime / Pomodoro / Focus con el contrato aditivo.
+**Objetivo:** máquina de estados de Flowtime / Pomodoro / Focus con el contrato aditivo y el compromiso congelado.
 
 ### Scope
 
-- Estados: `RUNNING`, `BREAK`, `SUSPENDED`, `COMPLETED`, `ABORTED`, `ABORTED_PENALIZED`.
-- Contrato aditivo: `+` extiende, nunca resta; sin pausa salvo Flowtime.
-- Presets (`25/5`, `50/10`, `75/12`, `90/15`) y `cycles_before_long`.
-- Focus: abortar = crédito 0 + cooldown 5 min + challenge + reflexión.
-- Switch de actividad a mitad de sesión (parte el tiempo, no reinicia).
-- Niveles de estrictez y contrato de compromiso (`ADR-004`).
+- Estados: `RUNNING`, `BREAK`, `AWAITING`, `SUSPENDED`, `COMPLETED`, `ABORTED`, `ABORTED_PENALIZED`.
+- Contrato aditivo: `+` extiende, nunca resta. Sin pausa salvo Flowtime.
+- **Pomodoro:** N ciclos explícitos; salida **gratis** en descanso o borde de ciclo; `AWAITING` con confirmación tras el descanso; cierre limpio si no confirma.
+- **Focus:** target inmutable, contrato duro.
+- **Flowtime:** libre y pausable.
+- Switch de actividad a mitad de sesión: parte el tiempo, no reinicia el contrato.
+- **Contrato de compromiso:** nivel + término + `params_snapshot` con checksum; el daemon usa el snapshot e ignora `config.toml` mientras esté activo.
 
 ### Criterio de salida
 
 - [ ] Los 3 modos completan y abortan con las transiciones correctas.
 - [ ] Es imposible restar tiempo o pausar Pomodoro/Focus.
-- [ ] El switch de actividad no penaliza y no reinicia el contrato.
+- [ ] Un Pomodoro se puede cerrar sin deuda en cualquier borde de ciclo.
+- [ ] El snapshot congela los parámetros y resiste ediciones de `config.toml`.
 
 ### Features (TDD)
 
 - [ ] `session_extend_only_increases_target` (RED → GREEN)
 - [ ] `pomodoro_has_no_pause` (RED → GREEN)
+- [ ] `pomodoro_boundary_exit_is_free` (RED → GREEN)
+- [ ] `pomodoro_awaits_confirmation_after_break` (RED → GREEN)
+- [ ] `pomodoro_awaiting_expiry_closes_completed` (RED → GREEN)
 - [ ] `flowtime_pause_stops_credit` (RED → GREEN)
-- [ ] `focus_abort_credits_zero_and_sets_cooldown` (RED → GREEN)
 - [ ] `task_switch_mid_session_splits_time` (RED → GREEN)
 - [ ] `commitment_contract_blocks_downgrade` (RED → GREEN)
+- [ ] `contract_snapshot_ignores_config_changes` (RED → GREEN)
 
 ---
 
-## Fase 5 — Presencia: idle, lock y suspensión ⏳
+## Fase 5 — Presencia, niveles y deuda ⏳
 
-**Objetivo:** adaptadores de `PresenceSource`, escalada de avisos y descuento de crédito.
+**Objetivo:** adaptadores de `PresenceSource`, escalada de avisos, abortos por nivel, deuda de reparación y refinanciación.
 
 ### Scope
 
-- `HypridleHookSource` (comandos `tpt-cli presence`).
-- `ClockGapSource` (salto monotónico vs wall-clock).
-- Escalada informativa (3/5/7 min) + gracia de 3 s→min.
-- Descuento: idle `max(0, gap − gracia)`, lock y suspensión completos.
-- Notificaciones de escritorio + sonido al terminar un bloque; pantalla de descanso.
-- `DAEMON_KILLED` y `Heartbeat` para cierres sucios.
+- `HypridleHookSource` (comandos `tpt-cli presence`) + `ClockGapSource` (salto monotónico vs wall-clock).
+- **Gap a los 7 min**: por debajo no existe; desde ahí se acumula y descuenta.
+- Avisos **inmediatos** a los 3 y 5 min (informativos, nunca descuentan).
+- Niveles `L1` (aborta 35%) y `L2` (aborta 25%, lock inmediato) como presets de solo lectura.
+- Crédito al abortar: manual conserva; inactividad cero solo en L2 severo (lock o gap único ≥30%).
+- **Deuda de reparación:** 5/8 min +1 por aborto (topes 20/25), +5 min/día calculado, caducidad 15/7 días, cobro como entrada negativa.
+- **Refinanciación:** `pending_extra` acumulable (tope 40%) que se suma al target de la próxima sesión.
+- Puntaje obligatorio (1–7 en L1, 1–5 en L2) y notas obligatorias en L2.
+- Notificaciones de escritorio + sonido; pantalla de descanso.
+- Heartbeat de presencia: sin señal fresca no se arranca en L1/L2.
 
 ### Criterio de salida
 
-- [ ] Una sesión con idle prolongado descuenta exactamente el excedente.
-- [ ] Lock y suspensión descuentan el gap completo.
+- [ ] Un gap por debajo de 7 min no descuenta ni acumula; uno mayor descuenta completo.
+- [ ] L1 aborta a 35% acumulado; L2 a 25% o al instante con lock.
+- [ ] Un aborto manual conserva el crédito pero crea deuda; uno de inactividad puede llevar el crédito a 0.
+- [ ] La deuda crece por cálculo (sin job) y al vencer deja una entrada negativa.
+- [ ] Refinanciar suma al target de la próxima sesión y no se puede esquivar.
 - [ ] Sin `hypridle`, la app funciona (degradación elegante, sin panics).
 
 ### Features (TDD)
 
-- [ ] `idle_below_grace_credits_full_time` (RED → GREEN)
-- [ ] `idle_above_grace_deducts_only_excess` (RED → GREEN)
+- [ ] `gap_below_threshold_is_ignored` (RED → GREEN)
+- [ ] `gap_above_threshold_deducts_full` (RED → GREEN)
 - [ ] `locked_gap_deducts_full_time` (RED → GREEN)
 - [ ] `clock_jump_detected_as_suspend_gap` (RED → GREEN)
+- [ ] `l1_aborts_at_35_percent_accumulated` (RED → GREEN)
+- [ ] `l2_aborts_at_25_percent_and_lock_is_immediate` (RED → GREEN)
+- [ ] `l2_severe_abort_zeroes_credit_manual_keeps_it` (RED → GREEN)
+- [ ] `debt_grows_five_minutes_per_day_without_job` (RED → GREEN)
+- [ ] `debt_expiry_writes_negative_entry` (RED → GREEN)
+- [ ] `refinance_accumulates_pending_extra_capped_at_40` (RED → GREEN)
+- [ ] `l2_abort_requires_notes` (RED → GREEN)
 - [ ] `daemon_kill_marks_session_penalized` (RED → GREEN)
 
 ---

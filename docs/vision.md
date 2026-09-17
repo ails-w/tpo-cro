@@ -40,11 +40,11 @@ No espía qué apps usás. No categoriza ventanas. No bloquea programas. El comp
 | D9 | Abortar Focus = crédito 0 + cooldown 5 min + challenge + reflexión obligatoria |
 | D10 | Cooldown de 5 min visible en la TUI |
 | D11 | Challenge + reflexión obligatoria al **abortar**; opcional al completar |
-| D12 | Inactividad: aviso informativo (3/5 min) y gracia de 3 min; por default **no castiga** |
+| D12 | Inactividad: avisos a los 3 y 5 min; el gap **existe recién a los 7 min** y solo entonces descuenta. Por default (`L0`) no castiga |
 | D13 | Presets ajustables: `25/5`, `50/10`, `75/12`, `90/15` (largo ≤20, corto ≤15) |
 | D14 | Switch de actividad a mitad de sesión sin penalización: el tiempo se parte |
 | D15 | Métricas: **observado vs acreditado**; promedios por día trabajado **y** por día calendario |
-| D16 | **Niveles de estrictez** configurables (`Off`/`L0`/`L1`/`L2`) + **contrato de compromiso** por término |
+| D16 | Niveles `Off`/`L0`/`L1`/`L2`: **L0 configurable, L1/L2 presets fijos**; **contrato de compromiso** por término; los abortos se pagan con **deuda de reparación** o **refinanciación** |
 | D17 | Actividades con **agenda opcional** (recurrencia) y **cola del día** |
 | D18 | Tiempo **manual** e **importado** se etiquetan, y **suman al total** de métricas |
 | D19 | SQLite sin tiers de agregación: métricas calculadas sobre `sessions` + `time_entries` |
@@ -70,7 +70,7 @@ No espía qué apps usás. No categoriza ventanas. No bloquea programas. El comp
 
 - **Toda sesión está asociada a una actividad.** No existe timer sin actividad.
 - **Flowtime:** cuenta libre, **con pausa**, sin contrato.
-- **Pomodoro:** ciclos trabajo → descanso; presets ajustables; durante trabajo solo `+`; durante descanso solo *saltear* o *terminar*.
+- **Pomodoro:** **N ciclos explícitos**; durante trabajo solo `+`; el siguiente ciclo **requiere confirmación** tras el descanso. Salir en un descanso o en un borde de ciclo es **gratis** — nunca hay que abortar para irse.
 - **Focus:** contrato duro e inmutable; solo `+` para extender.
 - **Cerrar la TUI no aborta.** La sesión vive en el daemon.
 - **Switch de actividad** a mitad de sesión: el tiempo se parte y el contrato continúa.
@@ -81,10 +81,12 @@ Detalle → `ADR-004-clock-modes-and-penalties.md`.
 
 - Señales de presencia: **teclado idle**, **bloqueo de pantalla**, **suspensión/apagado**.
 - Fuente primaria: **hooks de `hypridle`**; backstop: **salto de reloj** (D3/D5).
-- Escalada informativa a los 3 y 5 min; a los 7 min el gap **deja de acreditarse**.
-- **Niveles de estrictez** (`Off`/`L0`/`L1`/`L2`) configurables, con **contrato de compromiso** por término para evitar el downgrade caprichoso.
+- Avisos **inmediatos** a los 3 y 5 min. A los **7 min** el gap existe y deja de acreditarse.
+- **Niveles:** `L0` es medición configurable sin castigo; `L1` y `L2` son **presets fijos** que el usuario ve pero no edita.
+- **El aborto se paga trabajando, no esperando:** la deuda de reparación se salda con foco, o **se refina** aceptando más compromiso en la próxima sesión.
+- **Contrato de compromiso:** subir de nivel exige un término y congela los parámetros; bajar queda bloqueado hasta que venza.
 
-Detalle → `ADR-008-presence-and-penalties.md`.
+Detalle → `ADR-004-clock-modes-and-penalties.md` · `ADR-008-presence-and-penalties.md`.
 
 ### 3.5 Tiempo Manual
 

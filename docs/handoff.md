@@ -12,7 +12,7 @@
 |---|---|
 | **Fase activa** | Fase 1 — Pivote documental + dominio, config y puertos |
 | **Última completada** | Fase 0 — Setup (workspace Rust + CI) |
-| **Progreso** | Feature 1.0 (pivote documental) completada. Features 1.1–1.5 (dominio/config/puertos) pendientes. |
+| **Progreso** | Feature 1.0 completa: pivote documental **y contrato cerrado** (`ADR-004` con niveles, deuda de reparación y refinanciación). Features 1.1–1.5 (dominio/config/puertos) pendientes. |
 
 ## Pivote de alcance (2026-09)
 
@@ -32,10 +32,12 @@ Ver `docs/vision.md` (tabla D1–D20) y `docs/adr/`. Las críticas para el pivot
 
 ## Decisiones pendientes
 
-- 🔴 **ÚNICO TEMA ABIERTO: niveles de estrictez y default.** Definir la tabla final de `Off` / `L0` / `L1` / `L2`, sus umbrales y cuál es el default (propuesta actual: `L0`). Detalle en `ADR-004` §5 y `config.toml` (`[presence]`).
-- Fórmula concreta del **Focus Quality** (promedio de rating con o sin ponderación por duración) → Fase 8.
-- Umbral exacto de "día trabajado" (minutos mínimos) → Fase 8.
+- Fórmula concreta del **Focus Quality** (promedio de rating normalizado por `rating_scale`) → Fase 8.
+- Umbral exacto de **"día trabajado"** (minutos mínimos) → Fase 8.
+- Definición fina de la **racha**: día cumplido con ≥1 ciclo o ≥X min acreditados → Fase 9.
+- ~~Niveles de estrictez y default~~ ✅ cerrado en `ADR-004` §5 (`L0` default, L1/L2 presets fijos).
 - ~~Modelo de `Task`~~ ✅ resuelto: `Activity` es la unidad; el `Schedule` es opcional.
+- ~~Challenge y cooldown~~ ✅ rediseñados como **deuda de reparación + refinanciación** (`ADR-004` §6–7).
 
 ## Riesgos activos / Gotchas
 

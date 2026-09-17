@@ -1,7 +1,11 @@
 # TPT — Configuración por defecto/ejemplo
 #
-# El nivel de estrictez declarado acá es la INTENCIÓN. El compromiso vigente
-# (nivel + término) vive en la DB con checksum — ver ADR-004.
+# Los parámetros de los niveles L1 y L2 son PRESETS FIJOS (ADR-004 §5):
+# no se configuran acá y no se pueden editar desde la TUI. Se VISUALIZAN
+# en la pantalla [C]onfig › Contrato activo.
+#
+# Lo configurable es: Off/L0 (medición), presets de timer, notificaciones,
+# retención de notas y la ELECCIÓN de nivel + término.
 
 [general]
 db_path = "~/.local/share/tpt/metrics.db"
@@ -10,16 +14,19 @@ notes_retention_days = 365        # 0 = nunca eliminar notas
 
 [timers]
 default_preset = "preset-25-5"
-cooldown_minutes = 5
 max_short_break_minutes = 15      # regla dura
 max_long_break_minutes = 20       # regla dura
 max_warnings_per_session = 3
-# 3 capas del modo foco (ADR-004):
-#   soft   → layout a pantalla completa + beacon + confirmación al salir
+# Pomodoro
+pomodoro_cycles = 4               # N ciclos; al completarlos la sesión CIERRA (gratis)
+require_break_confirmation = true # el siguiente ciclo arranca solo si el usuario confirma
+awaiting_expiry_minutes = 30      # si no confirma en X, cierra COMPLETED (sin deuda)
+# Vista del modo foco (3 capas, ADR-004)
+#   soft   → pantalla completa + beacon + confirmación al salir
 #   locked → bloquea la navegación de la TUI durante la sesión
 focus_view = "soft"
 
-# Presets ajustables (D13). Regla dura: corto <=15, largo <=20.
+# Presets ajustables. Regla dura: corto <=15, largo <=20.
 [[timer_presets]]
 name = "preset-25-5"
 work_minutes = 25
@@ -49,31 +56,40 @@ long_break_minutes = 20
 cycles_before_long = 1
 
 [presence]
-# Nivel de estrictez: Off | L0 | L1 | L2
-#   Off → sin detección de presencia (se acredita todo)
-#   L0  → detecta y no acredita el gap excedente; sin castigos (default propuesto)
-#   L1  → además aborta la sesión si el no-acreditado supera severe_ratio
-#   L2  → además crédito 0 + cooldown en casos extremos
+# Nivel vigente: Off | L0 | L1 | L2
+#   Off → sin presencia; acredita todo (cronómetro puro)
+#   L0  → mide y descuenta el gap; SIN abortos ni deuda (default amable)
+#   L1  → contrato estricto (preset)
+#   L2  → contrato duro   (preset)
+# Cambiar a L1/L2 exige firmar un término (días/semanas/meses).
 level = "L0"
 
-# Gracia: los primeros N segundos de un gap de IDLE se acreditan igual
-# (no tocar el teclado puede ser pensar). No aplica a lock ni a suspensión.
-grace_seconds = 180
+# ---- Medición (aplica a L0; L1/L2 fijan sus propios valores) ----
+min_gap_seconds = 420             # 7 min: desde acá el gap existe y cuenta
+gap_deduction = "full"            # full = descuenta el gap completo · excess = solo lo que excede
+suspend_min_seconds = 60          # una suspensión más corta no aborta; acumula
+warn_after_seconds = 180          # aviso suave (3 min)
+strong_warn_after_seconds = 300   # aviso fuerte (5 min)
+# Los avisos son INFORMATIVOS y se disparan al instante: nunca descuentan tiempo.
 
-# Umbrales de aviso. Son INFORMATIVOS: nunca descuentan tiempo por sí solos.
-warn_after_seconds = 180
-strong_warn_after_seconds = 300
-gap_after_seconds = 420
+# ---- Anti-gaming ----
+# Si no hay heartbeat fresco de presencia, no se puede arrancar en L1/L2.
+require_heartbeat = true
+heartbeat_max_age_seconds = 60
 
-# Disparadores del nivel 2 (casos extremos) — ver ADR-004.
-severe_gap_seconds = 1200         # un gap continuo de 20 min
-severe_ratio = 0.40               # 40% del target sin acreditar
-requires_prior_strike = true      # exige un aborto previo por idle/lock en 24 h
+# ---- Contadores ----
+abort_counter_window = "contract" # contract | day | session
+# L1 y L2 (PRESETS — solo lectura, no editar acá):
+#   L1 · gap 7min · aborta 35% · deuda 5min(+1/aborto, tope 20) · challenge +8%(+2%/aborto, tope 40%)
+#        · caducidad 15 días · puntaje 1-7 obligatorio · 1 perdón
+#   L2 · gap 7min · aborta 25% · lock aborta · crédito 0 si lock o gap único >=30%
+#        · deuda 8min(+1/aborto, tope 25) · challenge +15%(+2%/aborto, tope 40%)
+#        · caducidad 7 días · puntaje 1-5 obligatorio · notas obligatorias · 0 perdones
 
 [commitment]
 min_term_days = 1                 # término mínimo al subir de nivel
 
 [notifications]
-desktop = true                    # notificación al terminar un bloque
+desktop = true                    # avisos de inactividad y fin de bloque
 sound = true
 sound_file = ""                   # vacío = sonido por defecto del sistema
