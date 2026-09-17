@@ -20,7 +20,7 @@ max_warnings_per_session = 3
 # Pomodoro
 pomodoro_cycles = 4               # N ciclos; al completarlos la sesión CIERRA (gratis)
 require_break_confirmation = true # el siguiente ciclo arranca solo si el usuario confirma
-awaiting_expiry_minutes = 30      # si no confirma en X, cierra COMPLETED (sin deuda)
+awaiting_expiry_minutes = 45      # si no confirma en X, cierra COMPLETED (sin deuda)
 # Vista del modo foco (3 capas, ADR-004)
 #   soft   → pantalla completa + beacon + confirmación al salir
 #   locked → bloquea la navegación de la TUI durante la sesión

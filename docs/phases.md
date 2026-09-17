@@ -13,6 +13,17 @@
 - `docs/learning/` y `docs/progress-log/` se escriben MIENTRAS se avanza la fase (justo-a-tiempo).
 - Al cerrar una fase: actualizar log + learning + handoff + commit.
 
+### Estructura de cada fase
+
+Toda fase se documenta con las mismas secciones, sin excepción:
+
+1. **Objetivo** — qué entrega la fase en una línea.
+2. **Scope** — qué se construye.
+3. **Fuera de scope** — qué NO se toca (evita el scope creep).
+4. **Conceptos de aprendizaje** — qué se aprende; alimenta `docs/learning/`.
+5. **Criterio de salida** — cómo se sabe que la fase terminó (todo verificable).
+6. **Features (TDD)** — los tests que definen cada feature, en orden RED → GREEN.
+
 ## Resumen de fases
 
 | # | Feature (fase) | Estado | Conceptos | Log |
@@ -22,7 +33,7 @@
 | 2 | Store SQLite | ⏳ | `learning/phase-02-store.md` | `progress-log/phase-02-store.md` |
 | 3 | Actividades, proyectos, tags, agenda y cola | ⏳ | `learning/phase-03-activities.md` | `progress-log/phase-03-activities.md` |
 | 4 | Motor de sesiones y contrato | ⏳ | `learning/phase-04-sessions.md` | `progress-log/phase-04-sessions.md` |
-| 5 | Presencia: idle, lock y suspensión | ⏳ | `learning/phase-05-presence.md` | `progress-log/phase-05-presence.md` |
+| 5 | Presencia, niveles y deuda | ⏳ | `learning/phase-05-presence.md` | `progress-log/phase-05-presence.md` |
 | 6 | Protocolo IPC versionado | ⏳ | `learning/phase-06-ipc.md` | `progress-log/phase-06-ipc.md` |
 | 7 | TUI | ⏳ | `learning/phase-07-tui.md` | `progress-log/phase-07-tui.md` |
 | 8 | Métricas y reportes | ⏳ | `learning/phase-08-analytics.md` | `progress-log/phase-08-analytics.md` |
@@ -42,11 +53,28 @@
 - `.github/workflows/ci.yml` (fmt + clippy + test).
 - Convenciones de `Cargo.toml` por crate (edition, lints de workspace).
 
+### Fuera de scope
+
+- Lógica de negocio, configuración, base de datos, IPC, TUI.
+
+### Conceptos de aprendizaje
+
+- [x] Workspace multi-crate en Rust → `docs/learning/phase-00-setup.md`
+- [x] `cargo clippy --all-targets -- -D warnings` como puerta → `docs/learning/phase-00-setup.md`
+- [x] Lints de crate y edition → `docs/learning/phase-00-setup.md`
+
 ### Criterio de salida
 
 - [x] `cargo build` compila los 4 crates.
 - [x] `cargo test` corre al menos un test de humo por crate.
 - [x] CI verde (fmt + clippy + test).
+
+### Features (TDD)
+
+- [x] `tpt_core_smoke_lib_exposes_version` (RED → GREEN)
+- [x] `tpt_daemon_smoke_lib_exposes_version` (RED → GREEN)
+- [x] `tpt_tui_smoke_lib_exposes_version` (RED → GREEN)
+- [x] `tpt_cli_smoke_lib_exposes_version` (RED → GREEN)
 
 ---
 
@@ -57,7 +85,7 @@
 ### Scope
 
 - **Feature 1.0 (docs):** reescritura de `vision.md`, `phases.md`, `architecture.md`, `AGENTS.md`, `README.md`, `config.toml`, `index.md`; ADRs 001–008; retiro de los ADRs de tracking/blocklist/retención.
-- **Modelos:** `AppConfig`, `TimerPreset`, `StrictnessLevel`, `Activity`, `Project`, `Tag`, `ScheduleRule`, `TimeEntry` (`Manual`/`Session`/`Imported`), `Session`, `SessionMode`, `SessionStatus`, `Reflection`.
+- **Modelos:** `AppConfig`, `TimerPreset`, `StrictnessLevel`, `TrackingMode`, `Activity`, `Project`, `Tag`, `ScheduleRule`, `TimeEntry` (`Manual`/`Session`/`Imported`/`Penalty`), `Session`, `SessionMode`, `SessionStatus`, `Reflection`, `Debt`, `CommitmentContract`.
 - **Parsing TOML** con defaults y validación (presets, umbrales de presencia, niveles, retención de notas).
 - **Puertos:** `Clock`, `PresenceSource`, `Store`, `ConfigSource`, `Notifier`, `IpcTransport`.
 - **Errores tipados** con `thiserror`.
@@ -82,31 +110,14 @@
 
 ### Features (TDD)
 
-#### Feature 1.0: Pivote documental
-- [ ] Reescribir visión, fases, arquitectura, AGENTS, README, config, index
-- [ ] Crear ADRs 001–008 y retirar los obsoletos
-- [ ] Borrar/fusionar docs duplicados
-
-#### Feature 1.1: Configuración TOML
-- [ ] Test: `app_config_parse_valid_toml_returns_expected` (RED)
-- [ ] Modelos + parsing (GREEN)
-
-#### Feature 1.2: Validación de presets y niveles
-- [ ] Test: `timer_preset_short_break_over_15_rejected` (RED)
-- [ ] Validación (GREEN)
-
-#### Feature 1.3: Actividades, proyectos y agenda
-- [ ] Test: `activity_without_schedule_is_valid` (RED)
-- [ ] Modelos + `ScheduleRule` (GREEN)
-
-#### Feature 1.4: Sesiones y entradas de tiempo
-- [ ] Test: `session_starts_running_with_activity` (RED)
-- [ ] Modelos + estados (GREEN)
-- [ ] Test: `manual_time_entry_adds_to_activity_total` (RED)
-
-#### Feature 1.5: Puertos
-- [ ] Test: `ports_are_object_safe` (RED)
-- [ ] Definir traits en `ports/` (GREEN)
+- [x] Feature 1.0 — Pivote documental (docs + ADRs)
+- [ ] `app_config_parse_valid_toml_returns_expected` (RED → GREEN)
+- [ ] `timer_preset_short_break_over_15_rejected` (RED → GREEN)
+- [ ] `activity_without_schedule_is_valid` (RED → GREEN)
+- [ ] `activity_requires_tracking_mode` (RED → GREEN)
+- [ ] `session_starts_running_with_activity` (RED → GREEN)
+- [ ] `manual_time_entry_adds_to_activity_total` (RED → GREEN)
+- [ ] `ports_are_object_safe` (RED → GREEN)
 
 ---
 
@@ -116,28 +127,37 @@
 
 ### Scope
 
-- `SqliteStore::open` + migración/versionado de esquema.
+- `SqliteStore::open` + migración y versionado de esquema.
 - Hilo escritor MPSC (no bloquea el loop de sesión).
-- WAL, checkpoint, `auto_vacuum=INCREMENTAL`.
-- Retención de **notas** (`notes_retention_days`); no hay tiers de eventos.
+- WAL, checkpoint `TRUNCATE`, `auto_vacuum=INCREMENTAL`.
+- Retención de **notas** (`notes_retention_days`); sin tiers de eventos.
+- Estado derivado por cálculo: crecimiento y vencimiento de deuda sin jobs.
 - `chattr +C` documentado y validado en disco real.
+
+### Fuera de scope
+
+- Lógica de contrato y sesión (Fase 4), adaptadores de presencia (Fase 5), IPC (Fase 6).
+
+### Conceptos de aprendizaje
+
+- [ ] `rusqlite` + WAL con escritor dedicado → `docs/learning/phase-02-store.md`
+- [ ] Migraciones y versionado de esquema → `docs/learning/phase-02-store.md`
+- [ ] Derivar estado por cálculo en vez de escribirlo (sin cron) → `docs/learning/phase-02-store.md`
 
 ### Criterio de salida
 
-- [ ] Store inicializa el esquema en una DB temporal.
+- [ ] Store inicializa el esquema completo en una DB temporal.
 - [ ] Las escrituras por MPSC no bloquean al caller.
-- [ ] La retención purga notas antiguas y conserva sesiones/entradas.
+- [ ] La retención purga notas antiguas y conserva sesiones y entradas.
+- [ ] Deuda: crecimiento y vencimiento se calculan correctamente desde `created_at`.
 
 ### Features (TDD)
 
-#### Feature 2.1: Esquema
-- [ ] Test: `store_creates_schema_and_indexes` (RED) → `SqliteStore::open` + migración (GREEN)
-
-#### Feature 2.2: Escritor MPSC
-- [ ] Test: `store_writer_persists_session_without_blocking` (RED) → hilo escritor (GREEN)
-
-#### Feature 2.3: Retención de notas
-- [ ] Test: `retention_purges_notes_keeps_sessions` (RED) → mantenimiento (GREEN)
+- [ ] `store_creates_schema_and_indexes` (RED → GREEN)
+- [ ] `store_writer_persists_session_without_blocking` (RED → GREEN)
+- [ ] `retention_purges_notes_keeps_sessions` (RED → GREEN)
+- [ ] `debt_amount_is_computed_from_created_at` (RED → GREEN)
+- [ ] `penalty_entry_accepts_negative_seconds` (RED → GREEN)
 
 ---
 
@@ -150,19 +170,31 @@
 - CRUD de `Activity` / `Project` / `Tag`; archivar y completar.
 - `ScheduleRule`: lunes–viernes, días específicos, toda la semana, rango de fechas.
 - Cola del día: agenda + pendientes; siguiente actividad al completar.
-- Tiempo manual por actividad (alta, edición, borrado).
+- Tiempo manual por actividad (alta, edición, borrado), solo en `tracking_mode = MANUAL`.
+
+### Fuera de scope
+
+- Motor de sesiones (Fase 4), métricas (Fase 8), vista TUI (Fase 7).
+
+### Conceptos de aprendizaje
+
+- [ ] Modelado de recurrencia con reglas → `docs/learning/phase-03-activities.md`
+- [ ] Derivar la cola del día en vez de almacenarla → `docs/learning/phase-03-activities.md`
+- [ ] Archivado sin perder historia → `docs/learning/phase-03-activities.md`
 
 ### Criterio de salida
 
 - [ ] Una actividad sin agenda es válida y no entra en la cola.
 - [ ] La cola del día respeta las 4 formas de agenda.
 - [ ] Completar una actividad la saca de la cola y ofrece la siguiente.
+- [ ] El tiempo manual se rechaza en actividades `TIMER`.
 
 ### Features (TDD)
 
 - [ ] `schedule_weekdays_matches_only_weekdays` (RED → GREEN)
 - [ ] `schedule_range_excludes_dates_outside` (RED → GREEN)
 - [ ] `queue_builds_from_schedule_and_pending` (RED → GREEN)
+- [ ] `manual_entry_rejected_when_tracking_mode_is_timer` (RED → GREEN)
 - [ ] `manual_entry_is_marked_and_sums_to_total` (RED → GREEN)
 
 ---
@@ -180,6 +212,16 @@
 - **Flowtime:** libre y pausable.
 - Switch de actividad a mitad de sesión: parte el tiempo, no reinicia el contrato.
 - **Contrato de compromiso:** nivel + término + `params_snapshot` con checksum; el daemon usa el snapshot e ignora `config.toml` mientras esté activo.
+
+### Fuera de scope
+
+- Detección de presencia y deuda (Fase 5), IPC (Fase 6), TUI (Fase 7).
+
+### Conceptos de aprendizaje
+
+- [ ] Máquina de estados en Rust (enum + transiciones) → `docs/learning/phase-04-sessions.md`
+- [ ] Hacer irrepresentable el estado inválido (contrato aditivo por tipos) → `docs/learning/phase-04-sessions.md`
+- [ ] Congelar configuración con snapshot + checksum → `docs/learning/phase-04-sessions.md`
 
 ### Criterio de salida
 
@@ -219,6 +261,16 @@
 - Notificaciones de escritorio + sonido; pantalla de descanso.
 - Heartbeat de presencia: sin señal fresca no se arranca en L1/L2.
 
+### Fuera de scope
+
+- Vista TUI de modales y contrato (Fase 7), reportes (Fase 8).
+
+### Conceptos de aprendizaje
+
+- [ ] Detección de presencia sin dependencias (hooks + reloj) → `docs/learning/phase-05-presence.md`
+- [ ] Política de inactividad como función pura y testeable → `docs/learning/phase-05-presence.md`
+- [ ] Degradación elegante y notificaciones fiables → `docs/learning/phase-05-presence.md`
+
 ### Criterio de salida
 
 - [ ] Un gap por debajo de 7 min no descuenta ni acumula; uno mayor descuenta completo.
@@ -257,10 +309,20 @@
 - Mensajes: `status`, `session_*`, `break_skip`, `presence_event`, `activity_*`, `notes_list`, `daemon_stop`, `ok`, `error`.
 - Mismatch de versión con error claro.
 
+### Fuera de scope
+
+- Lógica de contrato (Fase 4), dashboard TUI (Fase 7), reportes (Fase 8).
+
+### Conceptos de aprendizaje
+
+- [ ] Unix domain sockets y permisos → `docs/learning/phase-06-ipc.md`
+- [ ] Framing de longitud y protocolo versionado → `docs/learning/phase-06-ipc.md`
+
 ### Criterio de salida
 
 - [ ] Handshake compatible; mismatch devuelve error tipado.
 - [ ] Los comandos de control llegan al motor y responden `ok`/`error`.
+- [ ] `hypridle` puede reportar presencia por CLI sin abrir la TUI.
 
 ### Features (TDD)
 
@@ -268,6 +330,7 @@
 - [ ] `ipc_version_mismatch_returns_error` (RED → GREEN)
 - [ ] `ipc_server_routes_session_start` (RED → GREEN)
 - [ ] `ipc_client_sends_and_parses` (RED → GREEN)
+- [ ] `daemon_stop_marks_running_session_penalized` (RED → GREEN)
 
 ---
 
@@ -278,22 +341,36 @@
 ### Scope
 
 - Vistas: `[H]oy` (cola + timer mini) · `[T]imer` · `[M]étricas` · `[A]ctividades` · `[I]historial` · `[C]onfig`.
-- **Timer:** layout de foco a pantalla completa, **beacon permanente** en todas las vistas, `lock_focus_view` opt-in (3 capas, `ADR-004`/`ADR-008`).
+- **Config con dos paneles:** *Ajustes* (editable) y *Contrato activo* (solo lectura, con deuda y % en vivo).
+- **Timer:** layout de foco a pantalla completa, **beacon permanente** en todas las vistas, `lock_focus_view` opt-in (3 capas).
+- **Contadores en vivo:** `⏱ Focus 31:12 · Inactividad 4:12/17:30 (24%) · Abortos 2 · Deuda 12 min`.
 - **Historial:** notas y puntajes agrupados por fecha, filtrables por actividad y rating.
-- Modales: reflexión (rating 1–10 + notas, ambos opcionales), challenge, cooldown visible.
+- Modales: reflexión (puntaje + notas según nivel), challenge de refinanciación, `AWAITING` de Pomodoro.
 - Acción para apagar el daemon desde la TUI.
 - Widgets propios: heatmap y gauge circular.
+
+### Fuera de scope
+
+- Agregados avanzados (Fase 8), import (Fase 9).
+
+### Conceptos de aprendizaje
+
+- [ ] Ratatui: layout, widgets y eventos → `docs/learning/phase-07-tui.md`
+- [ ] Componentes testables (render con datos fake) → `docs/learning/phase-07-tui.md`
+- [ ] El beacon como contrato visual de presencia → `docs/learning/phase-07-tui.md`
 
 ### Criterio de salida
 
 - [ ] La TUI navega y renderiza con datos fake y con el daemon real.
 - [ ] El beacon muestra el tiempo restante en toda vista durante una sesión.
-- [ ] Los modales de reflexión permiten guardar solo nota, solo rating, ambos o nada.
+- [ ] El panel de contrato muestra los parámetros de L1/L2 bloqueados y legibles.
+- [ ] Los modales de reflexión permiten solo nota, solo puntaje, ambos o nada (salvo donde es obligatorio).
 
 ### Features (TDD)
 
 - [ ] `app_creates_main_window` (RED → GREEN)
 - [ ] `timer_view_shows_beacon_and_blocks_only_if_configured` (RED → GREEN)
+- [ ] `contract_panel_renders_preset_locked` (RED → GREEN)
 - [ ] `reflection_modal_allows_empty_and_partial_input` (RED → GREEN)
 - [ ] `history_groups_notes_by_date` (RED → GREEN)
 
@@ -309,21 +386,34 @@
 - Línea de sesiones/minutos con rangos `2 semanas` / `1 mes` / `Máx`.
 - Jerarquía **Año → Mes → Semana → Día** con rangos horarios y conteo de actividades.
 - Totales, días trabajados, meses trabajados, promedios por día trabajado y por día calendario.
-- **Focus Quality** (promedio de rating) por actividad y franja horaria.
-- Desglose por `source` (sesión / manual / importado) sobre el total.
+- **Focus Quality** (promedio de rating normalizado por `rating_scale`) por actividad y franja horaria.
+- Desglose por `source` (sesión / manual / importado) y **línea propia de penalizaciones**.
+- Desglose de `aborted_with` (USER vs sistema).
 - `tpt-cli report --range daily|weekly|monthly --format json|csv`.
+
+### Fuera de scope
+
+- Rutinas y rachas (Fase 9).
+
+### Conceptos de aprendizaje
+
+- [ ] Queries de agregación SQL → `docs/learning/phase-08-analytics.md`
+- [ ] Denominadores: día trabajado vs día calendario → `docs/learning/phase-08-analytics.md`
+- [ ] Normalización de puntajes entre escalas → `docs/learning/phase-08-analytics.md`
 
 ### Criterio de salida
 
 - [ ] Las métricas cuadran contra un dataset de prueba conocido.
-- [ ] Los dos denominadores (día trabajado / día calendario) se muestran por separado.
+- [ ] Los dos denominadores se muestran por separado.
+- [ ] Las penalizaciones aparecen como línea propia, sin ensuciar el total.
 - [ ] El reporte JSON/CSV se genera sin abrir la TUI.
 
 ### Features (TDD)
 
 - [ ] `analytics_daily_totals_from_sessions_and_entries` (RED → GREEN)
 - [ ] `analytics_averages_worked_day_and_calendar` (RED → GREEN)
-- [ ] `focus_quality_averages_rating_by_activity` (RED → GREEN)
+- [ ] `focus_quality_normalizes_rating_scale` (RED → GREEN)
+- [ ] `penalty_entries_render_as_their_own_line` (RED → GREEN)
 - [ ] `heatmap_buckets_by_day` (RED → GREEN)
 - [ ] `cli_report_weekly_json_valid` (RED → GREEN)
 
@@ -335,20 +425,33 @@
 
 ### Scope
 
-- Racha con política *never miss twice*; sesiones abortadas no acreditan.
+- Racha con política *never miss twice*; solo un **aborto real** la corta.
+- Racha atada al **checkpoint de confirmación**: lo cumplido en ciclos cerrados cuenta siempre.
 - Consistencia mensual de rutinas.
 - `tpt-cli import --super-productivity save.json`: validación, `--dry-run`, idempotencia por `external_id`.
 - Mapeo: `project` → `Project`, `task` → `Activity`, `timeEstimate` → `target_minutes`, `timeSpentOnDay` → `TimeEntry{IMPORTED}`.
 
+### Fuera de scope
+
+- Nuevas features de analíticas (Fase 8).
+
+### Conceptos de aprendizaje
+
+- [ ] Modelado de rachas y "never miss twice" → `docs/learning/phase-09-routines.md`
+- [ ] Parsing y adaptación de esquemas externos → `docs/learning/phase-09-routines.md`
+- [ ] Idempotencia y dedupe en importaciones → `docs/learning/phase-09-routines.md`
+
 ### Criterio de salida
 
 - [ ] La racha sobrevive a un día perdido y se corta a los dos.
+- [ ] Salir en un borde de ciclo o en un descanso nunca afecta la racha.
 - [ ] Import idempotente: correrlo dos veces no duplica.
 - [ ] `--dry-run` reporta el mapeo sin escribir.
 
 ### Features (TDD)
 
 - [ ] `streak_survives_one_missed_day` (RED → GREEN)
+- [ ] `boundary_exit_does_not_break_streak` (RED → GREEN)
 - [ ] `import_sp_json_maps_and_dedups` (RED → GREEN)
 - [ ] `import_dry_run_writes_nothing` (RED → GREEN)
 
@@ -366,10 +469,21 @@
 - Medición real de consumo de memoria (sin declarar límites antes).
 - Cobertura y documentación final.
 
+### Fuera de scope
+
+- Nuevas features.
+
+### Conceptos de aprendizaje
+
+- [ ] Empaquetado Arch (PKGBUILD) y systemd → `docs/learning/phase-10-ops.md`
+- [ ] Medición real de memoria en un daemon → `docs/learning/phase-10-ops.md`
+- [ ] Cobertura y casos borde → `docs/learning/phase-10-ops.md`
+
 ### Criterio de salida
 
 - [ ] Suite completa verde; cobertura >80% unit, >60% integración.
 - [ ] Instalación limpia en Arch (daemon + TUI + CLI).
+- [ ] Consumo de memoria medido y documentado.
 - [ ] `README.md` y `docs/` finalizados.
 
 ### Features (TDD)
@@ -377,4 +491,4 @@
 - [ ] `daemon_down_client_degrades_gracefully` (RED → GREEN)
 - [ ] `config_corrupt_falls_back_to_defaults` (RED → GREEN)
 - [ ] Unit systemd + PKGBUILD
-- [ ] Verificación en disco real (nodatacow + retención)
+- [ ] Verificación en disco real (nodatacow + vencimiento de deuda)

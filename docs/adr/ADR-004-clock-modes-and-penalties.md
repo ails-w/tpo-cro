@@ -42,7 +42,7 @@ El Pomodoro **no es infinito**: tiene **N ciclos explícitos** (configurable por
 
 Además existe la acción **"Terminar al final del ciclo"**: la sesión se cierra sola al terminar el ciclo en curso. **Nunca hay que abortar para irse a hacer otra cosa.**
 
-**Confirmación tras el descanso:** al terminar un descanso la sesión entra en `AWAITING` y **no avanza sola**. El siguiente ciclo de trabajo arranca **solo cuando el usuario confirma**. Si no vuelve dentro de `awaiting_expiry_minutes` (default 30), la sesión se cierra como `COMPLETED` con los ciclos ya cumplidos: **sin deuda y sin romper la racha.**
+**Confirmación tras el descanso:** al terminar un descanso la sesión entra en `AWAITING` y **no avanza sola**. El siguiente ciclo de trabajo arranca **solo cuando el usuario confirma**. Si no vuelve dentro de `awaiting_expiry_minutes` (default 45), la sesión se cierra como `COMPLETED` con los ciclos ya cumplidos: **sin deuda y sin romper la racha.**
 
 ### 4. Tiempo acreditado vs observado
 
