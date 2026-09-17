@@ -89,7 +89,7 @@ cargo clippy --workspace --all-targets --locked -- -D warnings
 ### Referencias
 
 - Clippy lints index: https://doc.rust-lang.org/clippy/
-- `AGENTS.md` (metodología TDD) · `docs/development-plan.md` (CI)
+- `AGENTS.md` (metodología TDD) · `docs/architecture.md` (CI)
 
 ---
 

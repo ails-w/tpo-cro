@@ -7,14 +7,12 @@ Mapa de navegación de la documentación del proyecto. Este es el **índice úni
 | Área | Documento | Contenido |
 |------|-----------|-----------|
 | **Estado actual** (mutable) | `docs/handoff.md` | Fase activa, próximo paso, riesgos |
-| Visión | `docs/vision.md` | Alcance global, funcionalidades, decisiones D1–D20 |
+| Visión | `docs/vision.md` | Alcance, funcionalidades core, decisiones D1–D20 |
 | Plan de fases POR FEATURE | `docs/phases.md` | Fases con scope, criterios de salida, pasos TDD |
 | Aprendizaje | `docs/learning/` | Conceptos por fase (`phase-NN-name.md`) |
 | Progreso (log) | `docs/progress-log/` | Historial por fase (`phase-NN-name.md`) |
-| Decisiones | `docs/adr/` | ADRs (`ADR-0NN-*.md`) |
-| Arquitectura | `docs/architecture.md` | Arquitectura, crates, puertos, IPC, SQLite, BTRFS |
-| Desarrollo | `docs/development-plan.md` | Testing, CI, packaging, deployment |
-| Diagramas (opcional) | `docs/diagrams/` | Solo si aportan (ASCII/Mermaid) |
+| Decisiones | `docs/adr/` | ADRs 001–008 (`ADR-0NN-*.md`) |
+| Arquitectura | `docs/architecture.md` | Crates, puertos, IPC, modelo de datos, testing, CI |
 
 ## Fuera de docs
 
@@ -26,8 +24,10 @@ Mapa de navegación de la documentación del proyecto. Este es el **índice úni
 
 ## Reglas de docs
 
-- Idioma: Español. Nombres de carpetas/archivos en inglés.
+- Idioma: español. Nombres de carpetas/archivos en inglés.
 - Formato: Markdown.
 - Mantener `handoff.md` actualizado al iniciar/cerrar sesión.
 - Cada fase crea `learning/phase-NN-name.md` y `progress-log/phase-NN-name.md` al comenzar (justo-a-tiempo).
-- ADRs: una decisión = un archivo en `docs/adr/`; nunca reescribir historial (superceder con ADR nuevo).
+- ADRs: una decisión = un archivo en `docs/adr/`. El detalle vive ahí; no se duplica acá.
+- **Sin diagramas por defecto.** Solo si algo es imposible de explicar con texto.
+- **No duplicar**: si un párrafo se repite en dos archivos, está mal ubicado.

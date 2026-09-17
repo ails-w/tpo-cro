@@ -1,6 +1,6 @@
 # Plan de Fases — TPT (por Feature)
 
-> Índice maestro del desarrollo. La fase activa tiene detalle expandido.
+> Índice maestro del desarrollo. **La fase activa tiene detalle expandido**; las siguientes, resumen.
 > Conceptos → `docs/learning/phase-NN-name.md` · Log → `docs/progress-log/phase-NN-name.md`
 > Estado mutable → `docs/handoff.md`
 
@@ -18,14 +18,14 @@
 | # | Feature (fase) | Estado | Conceptos | Log |
 |---|----------------|--------|-----------|-----|
 | 0 | Setup: workspace + CI | ✅ | `learning/phase-00-setup.md` | `progress-log/phase-00-setup.md` |
-| 1 | Configuración y dominio (puertos) | ⏳ | `learning/phase-01-config.md` | `progress-log/phase-01-config.md` |
-| 2 | Store SQLite (esquema, WAL, retención) | ⏳ | `learning/phase-02-store.md` | `progress-log/phase-02-store.md` |
-| 3 | Captura y categorización (Hyprland, $PWD, regex) | ⏳ | `learning/phase-03-capture.md` | `progress-log/phase-03-capture.md` |
-| 4 | Inactividad y blocklist (enforcement) | ⏳ | `learning/phase-04-inactivity.md` | `progress-log/phase-04-inactivity.md` |
-| 5 | Motor de relojes (Pomodoro/Focus/Flowtime) | ⏳ | `learning/phase-05-timers.md` | `progress-log/phase-05-timers.md` |
+| 1 | Pivote documental + dominio, config y puertos | ⏳ | `learning/phase-01-domain.md` | `progress-log/phase-01-domain.md` |
+| 2 | Store SQLite | ⏳ | `learning/phase-02-store.md` | `progress-log/phase-02-store.md` |
+| 3 | Actividades, proyectos, tags, agenda y cola | ⏳ | `learning/phase-03-activities.md` | `progress-log/phase-03-activities.md` |
+| 4 | Motor de sesiones y contrato | ⏳ | `learning/phase-04-sessions.md` | `progress-log/phase-04-sessions.md` |
+| 5 | Presencia: idle, lock y suspensión | ⏳ | `learning/phase-05-presence.md` | `progress-log/phase-05-presence.md` |
 | 6 | Protocolo IPC versionado | ⏳ | `learning/phase-06-ipc.md` | `progress-log/phase-06-ipc.md` |
-| 7 | TUI Dashboard | ⏳ | `learning/phase-07-tui.md` | `progress-log/phase-07-tui.md` |
-| 8 | Analíticas y reportes (CLI) | ⏳ | `learning/phase-08-analytics.md` | `progress-log/phase-08-analytics.md` |
+| 7 | TUI | ⏳ | `learning/phase-07-tui.md` | `progress-log/phase-07-tui.md` |
+| 8 | Métricas y reportes | ⏳ | `learning/phase-08-analytics.md` | `progress-log/phase-08-analytics.md` |
 | 9 | Rutinas, rachas e import | ⏳ | `learning/phase-09-routines.md` | `progress-log/phase-09-routines.md` |
 | 10 | Ops, packaging y pulido | ⏳ | `learning/phase-10-ops.md` | `progress-log/phase-10-ops.md` |
 
@@ -33,7 +33,7 @@
 
 ## Fase 0 — Setup: workspace + CI ✅
 
-**Objetivo:** dejar lista la infraestructura del workspace Rust y el pipeline de CI.
+**Objetivo:** infraestructura del workspace Rust y pipeline de CI.
 
 ### Scope
 
@@ -42,489 +42,320 @@
 - `.github/workflows/ci.yml` (fmt + clippy + test).
 - Convenciones de `Cargo.toml` por crate (edition, lints de workspace).
 
-### Fuera de scope
-
-- Lógica de negocio, configuración, DB, IPC.
-
-### Conceptos de aprendizaje
-
-- [x] Workspace multi-crate en Rust → `docs/learning/phase-00-setup.md`
-- [x] `cargo clippy --all-targets -- -D warnings` como puerta → `docs/learning/phase-00-setup.md`
-- [x] Lints de crate y edition → `docs/learning/phase-00-setup.md`
-
 ### Criterio de salida
 
 - [x] `cargo build` compila los 4 crates.
 - [x] `cargo test` corre al menos un test de humo por crate.
 - [x] CI verde (fmt + clippy + test).
 
-### Features (TDD)
-
-#### Feature 0.1: Workspace
-- [x] Escribir test: `tpt_core_smoke_lib_exposes_version` (RED)
-- [x] Crear `Cargo.toml` workspace + 4 crates skeleton (GREEN)
-- [x] Refactorizar
-
-#### Feature 0.2: CI
-- [x] Crear `.github/workflows/ci.yml` (GREEN)
-- [x] Verificar local: `cargo fmt --check` + `cargo clippy --all-targets -- -D warnings` + `cargo test`
-
 ---
 
-## Fase 1 — Configuración y dominio (puertos) ⏳
+## Fase 1 — Pivote documental + dominio, config y puertos ⏳
 
-**Objetivo:** modelos del dominio y puertos (traits) en `tpt-core`; parsing/validación de `config.toml`.
+**Objetivo:** alinear toda la documentación con el pivote *timer-first* (`ADR-007`) y dejar en `tpt-core` los modelos, la validación de config y los puertos.
 
 ### Scope
 
-- Modelos: `AppConfig`, `Category`, `Rule`, `TimerPreset`, `BlockedApp`, `FocusSession`, `Task`.
-- Parsing TOML con defaults y validación (presets, umbrales idle, enforcement, retención).
-- Puertos (traits): `WindowSource`, `IdleSource`, `Clock`, `Store`, `ConfigSource`, `Notifier`, `IpcTransport`.
-- Errores tipados con `thiserror`.
+- **Feature 1.0 (docs):** reescritura de `vision.md`, `phases.md`, `architecture.md`, `AGENTS.md`, `README.md`, `config.toml`, `index.md`; ADRs 001–008; retiro de los ADRs de tracking/blocklist/retención.
+- **Modelos:** `AppConfig`, `TimerPreset`, `StrictnessLevel`, `Activity`, `Project`, `Tag`, `ScheduleRule`, `TimeEntry` (`Manual`/`Session`/`Imported`), `Session`, `SessionMode`, `SessionStatus`, `Reflection`.
+- **Parsing TOML** con defaults y validación (presets, umbrales de presencia, niveles, retención de notas).
+- **Puertos:** `Clock`, `PresenceSource`, `Store`, `ConfigSource`, `Notifier`, `IpcTransport`.
+- **Errores tipados** con `thiserror`.
 
 ### Fuera de scope
 
-- Implementación de adaptadores OS, DB, IPC.
+- Persistencia real, adaptadores de OS, IPC, TUI.
 
 ### Conceptos de aprendizaje
 
-- [ ] Hexagonal: puertos vs adaptadores → `docs/learning/phase-01-config.md`
-- [ ] TOML + serde round-trip y defaults → `docs/learning/phase-01-config.md`
-- [ ] Errores tipados con `thiserror` → `docs/learning/phase-01-config.md`
+- [ ] Hexagonal: puertos vs adaptadores en un dominio sin SO → `docs/learning/phase-01-domain.md`
+- [ ] TOML + serde round-trip y defaults → `docs/learning/phase-01-domain.md`
+- [ ] Contrato aditivo como invariante de dominio → `docs/learning/phase-01-domain.md`
 
 ### Criterio de salida
 
 - [ ] `config.toml` parsea con defaults; config inválida falla con error tipado.
 - [ ] Presets validados: corto ≤15, largo ≤20.
-- [ ] Todos los puertos definidos y compilando.
+- [ ] Modelos del dominio compilan y sus tests pasan.
+- [ ] Los 6 puertos definidos, object-safe y con fake.
+- [ ] fmt + clippy limpios.
 
 ### Features (TDD)
 
-#### Feature 1.1: Modelos de configuración
+#### Feature 1.0: Pivote documental
+- [ ] Reescribir visión, fases, arquitectura, AGENTS, README, config, index
+- [ ] Crear ADRs 001–008 y retirar los obsoletos
+- [ ] Borrar/fusionar docs duplicados
+
+#### Feature 1.1: Configuración TOML
 - [ ] Test: `app_config_parse_valid_toml_returns_expected` (RED)
 - [ ] Modelos + parsing (GREEN)
 
-#### Feature 1.2: Validación de presets
+#### Feature 1.2: Validación de presets y niveles
 - [ ] Test: `timer_preset_short_break_over_15_rejected` (RED)
 - [ ] Validación (GREEN)
 
-#### Feature 1.3: Puertos (traits)
-- [ ] Test: `window_source_event_shape_compiles` (RED)
+#### Feature 1.3: Actividades, proyectos y agenda
+- [ ] Test: `activity_without_schedule_is_valid` (RED)
+- [ ] Modelos + `ScheduleRule` (GREEN)
+
+#### Feature 1.4: Sesiones y entradas de tiempo
+- [ ] Test: `session_starts_running_with_activity` (RED)
+- [ ] Modelos + estados (GREEN)
+- [ ] Test: `manual_time_entry_adds_to_activity_total` (RED)
+
+#### Feature 1.5: Puertos
+- [ ] Test: `ports_are_object_safe` (RED)
 - [ ] Definir traits en `ports/` (GREEN)
 
 ---
 
 ## Fase 2 — Store SQLite ⏳
 
-**Objetivo:** esquema SQLite, WAL, hilo escritor MPSC y retención modular.
+**Objetivo:** implementar el esquema de `ADR-002` con WAL, hilo escritor y retención de notas.
 
 ### Scope
 
-- Esquema (ver `ADR-002-sqlite-schema.md`): categorías, tareas, blocklist, logs, sesiones, agregados.
-- Migración/versión de esquema.
-- Hilo escritor MPSC (no bloquea captura).
-- WAL + checkpoint + `auto_vacuum=INCREMENTAL`.
-- Retención por tiers (raw/hourly/daily) y agregación.
-
-### Fuera de scope
-
-- Captura, IPC, enforcement.
-
-### Conceptos de aprendizaje
-
-- [ ] `rusqlite` + WAL y escritor dedicado → `docs/learning/phase-02-store.md`
-- [ ] Migraciones y versionado de esquema → `docs/learning/phase-02-store.md`
-- [ ] Agregados y retención por tiers → `docs/learning/phase-02-store.md`
+- `SqliteStore::open` + migración/versionado de esquema.
+- Hilo escritor MPSC (no bloquea el loop de sesión).
+- WAL, checkpoint, `auto_vacuum=INCREMENTAL`.
+- Retención de **notas** (`notes_retention_days`); no hay tiers de eventos.
+- `chattr +C` documentado y validado en disco real.
 
 ### Criterio de salida
 
-- [ ] Store inicializa esquema en DB temporal.
-- [ ] Escrituras por MPSC no bloquean al caller.
-- [ ] Retención purga raw > N días y consolida hourly/daily.
+- [ ] Store inicializa el esquema en una DB temporal.
+- [ ] Las escrituras por MPSC no bloquean al caller.
+- [ ] La retención purga notas antiguas y conserva sesiones/entradas.
 
 ### Features (TDD)
 
 #### Feature 2.1: Esquema
-- [ ] Test: `store_creates_schema_and_indexes` (RED)
-- [ ] `SqliteStore::open` + migración (GREEN)
+- [ ] Test: `store_creates_schema_and_indexes` (RED) → `SqliteStore::open` + migración (GREEN)
 
 #### Feature 2.2: Escritor MPSC
-- [ ] Test: `store_writer_persists_event_without_blocking` (RED)
-- [ ] Hilo escritor (GREEN)
+- [ ] Test: `store_writer_persists_session_without_blocking` (RED) → hilo escritor (GREEN)
 
-#### Feature 2.3: Retención
-- [ ] Test: `retention_purges_raw_keeps_daily` (RED)
-- [ ] Mantenimiento de retención (GREEN)
+#### Feature 2.3: Retención de notas
+- [ ] Test: `retention_purges_notes_keeps_sessions` (RED) → mantenimiento (GREEN)
 
 ---
 
-## Fase 3 — Captura y categorización ⏳
+## Fase 3 — Actividades, proyectos, tags, agenda y cola ⏳
 
-**Objetivo:** adaptador Hyprland (ventana activa + $PWD), motor de reglas regex y categorizador.
+**Objetivo:** CRUD de actividades y armado automático de la cola del día.
 
 ### Scope
 
-- `HyprlandWindowSource` (socket2): class, title, pid, pwd (`/proc/<pid>/cwd`).
-- `RuleEngine`: evaluación secuencial de reglas (class/title/pwd) → categoría.
-- `Categorizer` con `is_productive`.
-- `SystemClock` (monotónico + wall-clock; D5).
-
-### Fuera de scope
-
-- Idle, IPC, enforcement, persistencia de alto nivel.
-
-### Conceptos de aprendizaje
-
-- [ ] Socket IPC de Hyprland y parsing de eventos → `docs/learning/phase-03-capture.md`
-- [ ] Lectura `/proc/<pid>/cwd` y symlinks → `docs/learning/phase-03-capture.md`
-- [ ] `regex` en Rust y diseño de reglas → `docs/learning/phase-03-capture.md`
+- CRUD de `Activity` / `Project` / `Tag`; archivar y completar.
+- `ScheduleRule`: lunes–viernes, días específicos, toda la semana, rango de fechas.
+- Cola del día: agenda + pendientes; siguiente actividad al completar.
+- Tiempo manual por actividad (alta, edición, borrado).
 
 ### Criterio de salida
 
-- [ ] Con `WindowSource` fake, los eventos se categorizan correctamente.
-- [ ] `$PWD` con repos anidados/symlinks se canonicaliza.
-- [ ] Sin Hyprland activo, degradación elegante (sin panics).
+- [ ] Una actividad sin agenda es válida y no entra en la cola.
+- [ ] La cola del día respeta las 4 formas de agenda.
+- [ ] Completar una actividad la saca de la cola y ofrece la siguiente.
 
 ### Features (TDD)
 
-#### Feature 3.1: Motor de reglas
-- [ ] Test: `rule_engine_class_regex_assigns_category` (RED)
-- [ ] `RuleEngine` (GREEN)
-- [ ] Test: `rule_engine_pwd_prefix_wins_over_generic` (RED)
-
-#### Feature 3.2: Ventana activa
-- [ ] Test: `hyprland_source_parses_activewindow_event` (RED)
-- [ ] Adapter + `/proc` cwd (GREEN)
-
-#### Feature 3.3: Canonicalización
-- [ ] Test: `canonicalize_pwd_resolves_symlink` (RED)
-- [ ] Helper (GREEN)
+- [ ] `schedule_weekdays_matches_only_weekdays` (RED → GREEN)
+- [ ] `schedule_range_excludes_dates_outside` (RED → GREEN)
+- [ ] `queue_builds_from_schedule_and_pending` (RED → GREEN)
+- [ ] `manual_entry_is_marked_and_sums_to_total` (RED → GREEN)
 
 ---
 
-## Fase 4 — Inactividad y blocklist ⏳
+## Fase 4 — Motor de sesiones y contrato ⏳
 
-**Objetivo:** enforcement por blocklist por tarea y manejo de inactividad sin dañar métricas.
+**Objetivo:** máquina de estados de Flowtime / Pomodoro / Focus con el contrato aditivo.
 
 ### Scope
 
-- `IdleSource` (sin libwayland; helper/fallback): señal de input idle.
-- Aviso informativo tras `warn_after_seconds` (default 300 s) — nunca penaliza por sí solo.
-- Clasificación del gap como `idle/offline` (no productivo).
-- Blocklist por tarea: app bloqueada → aviso → countdown 3–5 min → penalización por modo.
-- Máx 2 avisos/sesión; switch de ventanas libre.
-- Suspensión: gap = idle/offline (D5).
-
-### Fuera de scope
-
-- TUI final de modales (Fase 7); motor de relojes completo (Fase 5).
-
-### Conceptos de aprendizaje
-
-- [ ] `ext-idle-notify` sin linkear libwayland → `docs/learning/phase-04-inactivity.md`
-- [ ] Máquina de estados de enforcement (aviso → countdown → penalización) → `docs/learning/phase-04-inactivity.md`
-- [ ] Tiempo monotónico y suspensión → `docs/learning/phase-04-inactivity.md`
+- Estados: `RUNNING`, `BREAK`, `SUSPENDED`, `COMPLETED`, `ABORTED`, `ABORTED_PENALIZED`.
+- Contrato aditivo: `+` extiende, nunca resta; sin pausa salvo Flowtime.
+- Presets (`25/5`, `50/10`, `75/12`, `90/15`) y `cycles_before_long`.
+- Focus: abortar = crédito 0 + cooldown 5 min + challenge + reflexión.
+- Switch de actividad a mitad de sesión (parte el tiempo, no reinicia).
+- Niveles de estrictez y contrato de compromiso (`ADR-004`).
 
 ### Criterio de salida
 
-- [ ] Idle prolongado no altera métricas (solo registra offline).
-- [ ] App bloqueada dispara aviso → countdown → penalización según modo.
-- [ ] Máx 2 avisos por sesión.
+- [ ] Los 3 modos completan y abortan con las transiciones correctas.
+- [ ] Es imposible restar tiempo o pausar Pomodoro/Focus.
+- [ ] El switch de actividad no penaliza y no reinicia el contrato.
 
 ### Features (TDD)
 
-#### Feature 4.1: Idle informativo
-- [ ] Test: `idle_source_warns_after_threshold_without_penalty` (RED)
-- [ ] `IdleSource` + aviso (GREEN)
-
-#### Feature 4.2: Blocklist
-- [ ] Test: `blocked_app_triggers_warning_then_countdown` (RED)
-- [ ] Enforcement blocklist (GREEN)
-- [ ] Test: `blocked_app_closed_within_grace_no_penalty` (RED)
-
-#### Feature 4.3: Suspensión
-- [ ] Test: `clock_gap_on_resume_treated_as_idle` (RED)
-- [ ] Manejo de gap (GREEN)
+- [ ] `session_extend_only_increases_target` (RED → GREEN)
+- [ ] `pomodoro_has_no_pause` (RED → GREEN)
+- [ ] `flowtime_pause_stops_credit` (RED → GREEN)
+- [ ] `focus_abort_credits_zero_and_sets_cooldown` (RED → GREEN)
+- [ ] `task_switch_mid_session_splits_time` (RED → GREEN)
+- [ ] `commitment_contract_blocks_downgrade` (RED → GREEN)
 
 ---
 
-## Fase 5 — Motor de relojes ⏳
+## Fase 5 — Presencia: idle, lock y suspensión ⏳
 
-**Objetivo:** state machine de Pomodoro, Focus y Flowtime con presets, penalizaciones, challenge, reflexión y cooldown.
+**Objetivo:** adaptadores de `PresenceSource`, escalada de avisos y descuento de crédito.
 
 ### Scope
 
-- **Pomodoro:** sin pausa; `+`/`-` (step/límites); abortar = reinicio de ciclos + sin racha + reflexión obligatoria + challenge; completado solo con tiempo productivo ≥ target.
-- **Focus:** contrato inmutable; abortar = crédito 0 + cooldown 5 min + challenge + reflexión obligatoria + impacto en métricas.
-- **Flowtime:** sesión variable, descanso proporcional, sin penalización.
-- Presets editables: `25/5`, `50/10`, `52/15`, `90/15(20)`; corto ≤15, largo ≤20 (52/17 clampado a 15).
-- Switch de tareas programadas en Pomodoro y Focus (sin penalización).
-- Cooldown 5 min visible (estado expuesto).
-- Estados: `COMPLETED`, `ABORTED_PENALIZED`, `ABORTED`, `IN_PROGRESS`, `SUSPENDED_IDLE`.
-
-### Fuera de scope
-
-- TUI, IPC.
-
-### Conceptos de aprendizaje
-
-- [ ] State machine en Rust (enum + transiciones) → `docs/learning/phase-05-timers.md`
-- [ ] Loss aversion / commitment device aplicado a software → `docs/learning/phase-05-timers.md`
-- [ ] Persistencia de estado de sesión → `docs/learning/phase-05-timers.md`
+- `HypridleHookSource` (comandos `tpt-cli presence`).
+- `ClockGapSource` (salto monotónico vs wall-clock).
+- Escalada informativa (3/5/7 min) + gracia de 3 s→min.
+- Descuento: idle `max(0, gap − gracia)`, lock y suspensión completos.
+- Notificaciones de escritorio + sonido al terminar un bloque; pantalla de descanso.
+- `DAEMON_KILLED` y `Heartbeat` para cierres sucios.
 
 ### Criterio de salida
 
-- [ ] Los 3 modos completan/abortan con las transiciones correctas.
-- [ ] Aborto Focus: crédito 0, cooldown 5 min, challenge + reflexión requeridos.
-- [ ] Switch de tarea no penaliza.
+- [ ] Una sesión con idle prolongado descuenta exactamente el excedente.
+- [ ] Lock y suspensión descuentan el gap completo.
+- [ ] Sin `hypridle`, la app funciona (degradación elegante, sin panics).
 
 ### Features (TDD)
 
-#### Feature 5.1: Estado base
-- [ ] Test: `session_start_in_progress_persists` (RED)
-- [ ] `SessionState` + Store (GREEN)
-
-#### Feature 5.2: Pomodoro
-- [ ] Test: `pomodoro_abort_resets_cycles_no_metric_penalty` (RED)
-- [ ] Máquina Pomodoro (GREEN)
-- [ ] Test: `pomodoro_adjust_plus_minus_bounded` (RED)
-
-#### Feature 5.3: Focus contrato
-- [ ] Test: `focus_abort_credits_zero_and_sets_cooldown` (RED)
-- [ ] Máquina Focus + cooldown (GREEN)
-- [ ] Test: `focus_immutable_rejects_adjust` (RED)
-
-#### Feature 5.4: Flowtime
-- [ ] Test: `flowtime_break_proportional_to_block` (RED)
-- [ ] Máquina Flowtime (GREEN)
-
-#### Feature 5.5: Challenge + reflexión
-- [ ] Test: `abort_requires_challenge_and_reflection` (RED)
-- [ ] Challenge + reflexión obligatoria (GREEN)
-
-#### Feature 5.6: Switch de tarea
-- [ ] Test: `task_switch_mid_session_no_penalty` (RED)
-- [ ] Re-asignación de tarea (GREEN)
+- [ ] `idle_below_grace_credits_full_time` (RED → GREEN)
+- [ ] `idle_above_grace_deducts_only_excess` (RED → GREEN)
+- [ ] `locked_gap_deducts_full_time` (RED → GREEN)
+- [ ] `clock_jump_detected_as_suspend_gap` (RED → GREEN)
+- [ ] `daemon_kill_marks_session_penalized` (RED → GREEN)
 
 ---
 
 ## Fase 6 — Protocolo IPC versionado ⏳
 
-**Objetivo:** protocolo UDS versionado, servidor en daemon y clientes TUI/CLI.
+**Objetivo:** UDS versionado, servidor en el daemon y clientes TUI/CLI.
 
 ### Scope
 
 - Framing longitud + JSON, `protocol_version` + `min_supported`.
-- `IpcServer` en daemon; socket `0600` en `$XDG_RUNTIME_DIR/tpt.sock`.
-- `IpcClient` compartido (TUI/CLI).
-- Mensajes: status, focus_start/abort, timer_adjust, task_switch, pomodoro_*, flowtime_*, blocklist_event, ok, error.
-- Mismatch de versión manejado con error claro.
-
-### Fuera de scope
-
-- Dashboard TUI (Fase 7), analíticas (Fase 8).
-
-### Conceptos de aprendizaje
-
-- [ ] Unix domain sockets y permisos → `docs/learning/phase-06-ipc.md`
-- [ ] Framing de longitud y protocolo versionado → `docs/learning/phase-06-ipc.md`
+- `IpcServer`; socket `0600` en `$XDG_RUNTIME_DIR/tpt.sock`.
+- `IpcClient` compartido.
+- Mensajes: `status`, `session_*`, `break_skip`, `presence_event`, `activity_*`, `notes_list`, `daemon_stop`, `ok`, `error`.
+- Mismatch de versión con error claro.
 
 ### Criterio de salida
 
-- [ ] Handshake con versión compatible; mismatch devuelve error tipado.
-- [ ] Comandos de control llegan al motor y responden `ok`/`error`.
+- [ ] Handshake compatible; mismatch devuelve error tipado.
+- [ ] Los comandos de control llegan al motor y responden `ok`/`error`.
 
 ### Features (TDD)
 
-#### Feature 6.1: Protocolo
-- [ ] Test: `ipc_handshake_negotiates_version` (RED)
-- [ ] Framing + handshake (GREEN)
-- [ ] Test: `ipc_version_mismatch_returns_error` (RED)
-
-#### Feature 6.2: Servidor
-- [ ] Test: `ipc_server_routes_status_and_focus` (RED)
-- [ ] `IpcServer` (GREEN)
-
-#### Feature 6.3: Cliente
-- [ ] Test: `ipc_client_sends_and_parses` (RED)
-- [ ] `IpcClient` (GREEN)
+- [ ] `ipc_handshake_negotiates_version` (RED → GREEN)
+- [ ] `ipc_version_mismatch_returns_error` (RED → GREEN)
+- [ ] `ipc_server_routes_session_start` (RED → GREEN)
+- [ ] `ipc_client_sends_and_parses` (RED → GREEN)
 
 ---
 
-## Fase 7 — TUI Dashboard ⏳
+## Fase 7 — TUI ⏳
 
-**Objetivo:** vistas Ratatui con timeline, barras, focus score, switches y timer con cooldown visible.
+**Objetivo:** interfaz Ratatui eficiente y visualmente atractiva.
 
 ### Scope
 
-- Vistas: Dashboard (timeline 24h, barras por categoría/proyecto), Timer (Pomodoro/Focus/Flowtime + presets + `+`/`-`), Analytics (D/S/M), Rutinas.
-- Focus Score (0–100, fórmula configurable).
-- Context switch frequency por hora.
-- Modales: aviso idle, aviso blocklist, challenge, reflexión, clasificación offline.
-- Cooldown 5 min visible.
-- Navegación y atajos de teclado.
-
-### Fuera de scope
-
-- Agregados/analíticas avanzadas (Fase 8), import (Fase 9).
-
-### Conceptos de aprendizaje
-
-- [ ] Ratatui: layout, widgets, eventos → `docs/learning/phase-07-tui.md`
-- [ ] Componentes testables (render con datos fake) → `docs/learning/phase-07-tui.md`
+- Vistas: `[H]oy` (cola + timer mini) · `[T]imer` · `[M]étricas` · `[A]ctividades` · `[I]historial` · `[C]onfig`.
+- **Timer:** layout de foco a pantalla completa, **beacon permanente** en todas las vistas, `lock_focus_view` opt-in (3 capas, `ADR-004`/`ADR-008`).
+- **Historial:** notas y puntajes agrupados por fecha, filtrables por actividad y rating.
+- Modales: reflexión (rating 1–10 + notas, ambos opcionales), challenge, cooldown visible.
+- Acción para apagar el daemon desde la TUI.
+- Widgets propios: heatmap y gauge circular.
 
 ### Criterio de salida
 
-- [ ] TUI arranca, navega y renderiza con datos reales (daemon) o fakes.
-- [ ] Cooldown y modales de enforcement funcionan.
-- [ ] Tests de componentes verdes.
+- [ ] La TUI navega y renderiza con datos fake y con el daemon real.
+- [ ] El beacon muestra el tiempo restante en toda vista durante una sesión.
+- [ ] Los modales de reflexión permiten guardar solo nota, solo rating, ambos o nada.
 
 ### Features (TDD)
 
-#### Feature 7.1: Esqueleto TUI
-- [ ] Test: `app_creates_main_window` (RED)
-- [ ] Orquestación Ratatui (GREEN)
-
-#### Feature 7.2: Dashboard
-- [ ] Test: `dashboard_renders_timeline_and_bars` (RED)
-- [ ] Vistas dashboard (GREEN)
-
-#### Feature 7.3: Timer
-- [ ] Test: `timer_view_adjust_and_cooldown_visible` (RED)
-- [ ] Vista timer + modales (GREEN)
-
-#### Feature 7.4: Focus score
-- [ ] Test: `focus_score_formula_configurable` (RED)
-- [ ] Cálculo + render (GREEN)
+- [ ] `app_creates_main_window` (RED → GREEN)
+- [ ] `timer_view_shows_beacon_and_blocks_only_if_configured` (RED → GREEN)
+- [ ] `reflection_modal_allows_empty_and_partial_input` (RED → GREEN)
+- [ ] `history_groups_notes_by_date` (RED → GREEN)
 
 ---
 
-## Fase 8 — Analíticas y reportes ⏳
+## Fase 8 — Métricas y reportes ⏳
 
-**Objetivo:** agregados persistentes, vistas D/S/M y `tpt-cli report`.
+**Objetivo:** agregaciones D/S/M, heatmap, jerarquías y `tpt-cli report`.
 
 ### Scope
 
-- Agregados diarios/semanales/mensuales desde `daily_aggregates`/`hourly_aggregates`.
-- Métricas: horas invertidas (observado y acreditado), días trabajados, promedios por día trabajado Y por día calendario, productivo vs distracción, media de sesión, switches, racha, abortadas.
-- Vistas de TUI para D/S/M.
-- `tpt-cli report --range weekly|monthly --format json|csv`.
-
-### Fuera de scope
-
-- Import (Fase 9).
-
-### Conceptos de aprendizaje
-
-- [ ] Queries de agregación SQL → `docs/learning/phase-08-analytics.md`
-- [ ] Export JSON/CSV estable y versionado → `docs/learning/phase-08-analytics.md`
+- Heatmap anual por día (estilo GitHub).
+- Línea de sesiones/minutos con rangos `2 semanas` / `1 mes` / `Máx`.
+- Jerarquía **Año → Mes → Semana → Día** con rangos horarios y conteo de actividades.
+- Totales, días trabajados, meses trabajados, promedios por día trabajado y por día calendario.
+- **Focus Quality** (promedio de rating) por actividad y franja horaria.
+- Desglose por `source` (sesión / manual / importado) sobre el total.
+- `tpt-cli report --range daily|weekly|monthly --format json|csv`.
 
 ### Criterio de salida
 
-- [ ] Métricas correctas en D/S/M con ambos denominadores.
-- [ ] `tpt-cli report` genera json/csv sin abrir la TUI.
+- [ ] Las métricas cuadran contra un dataset de prueba conocido.
+- [ ] Los dos denominadores (día trabajado / día calendario) se muestran por separado.
+- [ ] El reporte JSON/CSV se genera sin abrir la TUI.
 
 ### Features (TDD)
 
-#### Feature 8.1: Agregados
-- [ ] Test: `analytics_daily_aggregates_from_raw` (RED)
-- [ ] Rollup raw → hourly → daily (GREEN)
-
-#### Feature 8.2: Métricas
-- [ ] Test: `analytics_averages_worked_day_and_calendar` (RED)
-- [ ] Queries de métricas (GREEN)
-
-#### Feature 8.3: Report CLI
-- [ ] Test: `cli_report_weekly_json_valid` (RED)
-- [ ] Comando `report` (GREEN)
-
-#### Feature 8.4: Vistas D/S/M
-- [ ] Test: `analytics_view_renders_range` (RED)
-- [ ] Vistas en TUI (GREEN)
+- [ ] `analytics_daily_totals_from_sessions_and_entries` (RED → GREEN)
+- [ ] `analytics_averages_worked_day_and_calendar` (RED → GREEN)
+- [ ] `focus_quality_averages_rating_by_activity` (RED → GREEN)
+- [ ] `heatmap_buckets_by_day` (RED → GREEN)
+- [ ] `cli_report_weekly_json_valid` (RED → GREEN)
 
 ---
 
 ## Fase 9 — Rutinas, rachas e import ⏳
 
-**Objetivo:** rutinas diarias auto-generadas, habit streak e import de Super Productivity.
+**Objetivo:** rachas, consistencia e import de Super Productivity.
 
 ### Scope
 
-- Rutinas diarias (barra `X/Y` min combinando tracking pasivo).
-- Habit streak mensual (sesiones abortadas no acreditan).
-- `tpt-cli import --super-productivity save.json`: validación, `--dry-run`, idempotencia/dedup.
-
-### Fuera de scope
-
-- Nuevas features de analíticas.
-
-### Conceptos de aprendizaje
-
-- [ ] Modelado de rutinas recurrentes y streaks → `docs/learning/phase-09-routines.md`
-- [ ] Parsing/adaptación de esquemas externos → `docs/learning/phase-09-routines.md`
+- Racha con política *never miss twice*; sesiones abortadas no acreditan.
+- Consistencia mensual de rutinas.
+- `tpt-cli import --super-productivity save.json`: validación, `--dry-run`, idempotencia por `external_id`.
+- Mapeo: `project` → `Project`, `task` → `Activity`, `timeEstimate` → `target_minutes`, `timeSpentOnDay` → `TimeEntry{IMPORTED}`.
 
 ### Criterio de salida
 
-- [ ] Rutinas se auto-generan y progresan con el tracking.
-- [ ] Streak correcto con días no acreditados.
-- [ ] Import idempotente con `--dry-run`.
+- [ ] La racha sobrevive a un día perdido y se corta a los dos.
+- [ ] Import idempotente: correrlo dos veces no duplica.
+- [ ] `--dry-run` reporta el mapeo sin escribir.
 
 ### Features (TDD)
 
-#### Feature 9.1: Rutinas
-- [ ] Test: `routine_auto_generates_daily_with_progress` (RED)
-- [ ] Rutinas (GREEN)
-
-#### Feature 9.2: Streak
-- [ ] Test: `streak_excludes_aborted_days` (RED)
-- [ ] Streak mensual (GREEN)
-
-#### Feature 9.3: Import
-- [ ] Test: `import_sp_json_maps_and_dedups` (RED)
-- [ ] Adapter import + `--dry-run` (GREEN)
+- [ ] `streak_survives_one_missed_day` (RED → GREEN)
+- [ ] `import_sp_json_maps_and_dedups` (RED → GREEN)
+- [ ] `import_dry_run_writes_nothing` (RED → GREEN)
 
 ---
 
 ## Fase 10 — Ops, packaging y pulido ⏳
 
-**Objetivo:** robustez, packaging Arch, BTRFS y documentación final.
+**Objetivo:** robustez, packaging Arch y documentación final.
 
 ### Scope
 
-- Manejo de errores y degradación elegante (daemon caído, config corrupta).
+- Degradación elegante (daemon caído, config corrupta).
 - Unit systemd + PKGBUILD.
-- BTRFS: nodatacow, checkpoints, retención validada.
+- BTRFS: nodatacow + checkpoint validados en disco real.
+- Medición real de consumo de memoria (sin declarar límites antes).
 - Cobertura y documentación final.
-
-### Fuera de scope
-
-- Nuevas features.
-
-### Conceptos de aprendizaje
-
-- [ ] Empaquetado Arch (PKGBUILD) y systemd → `docs/learning/phase-10-ops.md`
-- [ ] Cobertura y casos borde → `docs/learning/phase-10-ops.md`
 
 ### Criterio de salida
 
 - [ ] Suite completa verde; cobertura >80% unit, >60% integración.
 - [ ] Instalación limpia en Arch (daemon + TUI + CLI).
-- [ ] Docs finalizadas (README, architecture, development-plan).
+- [ ] `README.md` y `docs/` finalizados.
 
 ### Features (TDD)
 
-#### Feature 10.1: Errores
-- [ ] Test: `daemon_down_client_degrades_gracefully` (RED)
-- [ ] Degradación elegante (GREEN)
-- [ ] Test: `config_corrupt_falls_back_to_defaults` (RED)
-
-#### Feature 10.2: Empaquetado
-- [ ] Unit systemd + PKGBUILD (GREEN)
-- [ ] Instalación y arranque verificados
-
-#### Feature 10.3: BTRFS final
-- [ ] Verificar nodatacow + checkpoint + retención en disco real (GREEN)
-
-#### Feature 10.4: Suite y docs
-- [ ] Cobertura objetivo alcanzada
-- [ ] README, architecture, development-plan finalizados
+- [ ] `daemon_down_client_degrades_gracefully` (RED → GREEN)
+- [ ] `config_corrupt_falls_back_to_defaults` (RED → GREEN)
+- [ ] Unit systemd + PKGBUILD
+- [ ] Verificación en disco real (nodatacow + retención)

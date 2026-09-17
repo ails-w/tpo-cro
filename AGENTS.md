@@ -11,7 +11,7 @@ Bienvenido al repositorio de **Terminal Productivity Tracker (TPT)**. Como agent
 
 1. **Eficiencia Extrema:** Minimizar el consumo de memoria del daemon (sin runtime async pesado). Evalúa el costo de memoria de cada crate antes de sugerir su adición a `Cargo.toml`, y mide el consumo real durante el desarrollo (Fase 10) antes de declarar límites.
 2. **Cero Tolerancia a Panics:** Se prohíbe el uso de `.unwrap()`, `.expect()` o `panic!()` en código de producción (`src/`). Todo error debe propagarse usando `thiserror` (en librerías/core) o manejarse con resiliencia en la app.
-3. **Desacoplamiento del Sistema Operativo:** Todo acceso a sockets de Wayland, ejecuciones CLI (`hyprctl`) o lectura de `/proc` DEBE estar aislado detrás de un `Trait` (Inversion of Control). Arquitectura hexagonal: puertos en `tpt-core`, adaptadores en `tpt-daemon` (ver `docs/adr/ADR-003-hexagonal-ports.md`).
+3. **Desacoplamiento del Sistema Operativo:** Toda señal externa — presencia (idle, bloqueo de pantalla, suspensión), reloj, persistencia o notificaciones — DEBE estar aislada detrás de un `Trait` (Inversion of Control). Arquitectura hexagonal: puertos en `tpt-core`, adaptadores en `tpt-daemon` (ver `docs/adr/ADR-003-hexagonal-ports.md`).
 
 ---
 
@@ -49,7 +49,7 @@ No escribas código de implementación sin antes haber creado y fallado el test 
 - **`docs/learning/` y `docs/progress-log/` se desarrollan MIENTRAS se avanza el proyecto** (justo-a-tiempo, no al final). Cada fase crea `learning/phase-NN-name.md` y `progress-log/phase-NN-name.md` al comenzar.
 - **`docs/handoff.md` es estado mutable:** actualizarlo al iniciar/cerrar sesión. No es historial.
 - **ADRs:** una decisión = un archivo en `docs/adr/`; nunca reescribir historial (superceder con ADR nuevo).
-- Formato: Markdown. Diagramas ASCII/Mermaid solo si aportan (`docs/diagrams/` opcional).
+- Formato: Markdown. **Sin diagramas por defecto**: solo si algo es imposible de explicar con texto.
 
 ---
 
@@ -57,7 +57,7 @@ No escribas código de implementación sin antes haber creado y fallado el test 
 
 - **Commits convencionales en inglés**: `feat:`, `fix:`, `test:`, `docs:`, `refactor:`, `chore:`.
 - **REGLA — commit después de cada FEATURE:** al cerrar cada feature (test RED → GREEN → refactor), hacer un commit convencional de esa feature. No acumular.
-- **REGLA — PR después de cada FASE terminada:** al completar una fase (criterios de salida cumplidos + log + learning + handoff actualizados), abrir una PR de revisión. Hoy solo existe la rama `main`; cuando haya remoto/más ramas (ej. `dev`), la PR se crea contra la rama correspondiente y el proceso se documenta en `docs/development-plan.md`.
+- **REGLA — PR después de cada FASE terminada:** al completar una fase (criterios de salida cumplidos + log + learning + handoff actualizados), abrir una PR de revisión. Flujo de ramas: `feat/* → dev → main` (ver `docs/adr/ADR-006-branching-and-protection.md`).
 - **NUNCA** añadir "Co-Authored-By" ni atribución IA.
 - DoD de una feature: test RED que pasa (GREEN) + refactor + aprendizaje documentado en `docs/learning/phase-NN-name.md` + `docs/handoff.md` actualizado + commit convencional.
 

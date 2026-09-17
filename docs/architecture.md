@@ -7,30 +7,32 @@
 │                  Terminal del Usuario                           │
 │  ┌────────────────────────────┐  ┌────────────────────────────┐ │
 │  │        tpt-tui             │  │        tpt-cli             │ │
-│  │  Dashboard Ratatui         │  │  control · report · import │ │
-│  │  (usuario regular)         │  │  (usuario regular)         │ │
+│  │  Hoy · Timer · Métricas    │  │  control · report · import │ │
+│  │  Actividades · Historial   │  │  daemon lifecycle          │ │
 │  └───────────┬────────────────┘  └─────────────┬──────────────┘ │
 │              │          UDS (JSON, 0600)       │                │
 │              └───────────────┬─────────────────┘                │
 │                              ▼                                 │
 │  ┌───────────────────────────────────────────────────────────┐ │
 │  │              tpt-daemon (background, systemd)              │ │
-│  │  Event loop: Hyprland socket2 · /proc · idle · reglas      │ │
-│  │  Motor de relojes · enforcement (blocklist/penalización)   │ │
-│  │  SQLite (WAL) · hilo escritor MPSC · mantenimiento        │ │
+│  │  Motor de sesiones · contrato · penalizaciones             │ │
+│  │  Presencia (hypridle hooks + salto de reloj)               │ │
+│  │  SQLite (WAL) · hilo escritor MPSC · mantenimiento         │ │
 │  └───────────────────────────────┬───────────────────────────┘ │
 │                                  ▼                             │
-│         Adaptadores OS: Hyprland IPC · /proc · idle · BTRFS    │
+│         Adaptadores: hypridle hook · clock · sqlite · toml      │
 └────────────────────────────────────────────────────────────────┘
 ```
 
-**¿Por qué esta separación?** El daemon corre siempre en segundo plano y es el único que toca el OS (captura, persistencia, enforcement). La TUI y el CLI son clientes on-demand por UDS; abrirlos/cerrarlos no interrumpe el tracking. Los adaptadores OS viven detrás de traits para que el core sea testeable sin Wayland/X11.
+**¿Por qué esta separación?** El daemon es dueño de la **sesión**, no solo de la persistencia. Si el timer viviera en la TUI, cerrarla (`q`) sería la forma obvia de escapar del compromiso. Con el daemon, la sesión sigue viva, sigue contando y abortar cuesta. **El daemon es la restricción.**
+
+La TUI y el CLI son clientes on-demand por UDS; abrirlos/cerrarlos no interrumpe nada. Los adaptadores de OS viven detrás de traits para que el core sea testeable sin Hyprland ni Wayland.
 
 ---
 
 ## Estructura de Carpetas
 
-> Estructura **creada en Fase 0** (ver `docs/phases.md`). Los módulos internos de cada crate se agregan en las fases siguientes.
+> Estructura creada en Fase 0. Los módulos internos se agregan por fase.
 
 ```
 tp-cro/
@@ -41,22 +43,22 @@ tp-cro/
 ├── .gitignore
 │
 ├── crates/
-│   ├── tpt-core/                      # Dominio puro: modelos, puertos (traits), reglas
+│   ├── tpt-core/                      # Dominio puro: modelos, puertos, contrato
 │   │   ├── src/
 │   │   │   ├── lib.rs
 │   │   │   ├── config/                # Modelos de configuración + parsing TOML
-│   │   │   ├── domain/                # Categorías, tareas, sesiones, estados
-│   │   │   ├── ports/                 # WindowSource, IdleSource, Clock, Store, ...
-│   │   │   ├── rules/                 # Motor de reglas regex + categorizador
-│   │   │   ├── timers/                # State machine Pomodoro/Focus/Flowtime
-│   │   │   └── analytics/             # Agregados y métricas
+│   │   │   ├── domain/                # Activity, Project, Tag, Schedule, TimeEntry, Session
+│   │   │   ├── ports/                 # Clock, Store, ConfigSource, PresenceSource, Notifier, IpcTransport
+│   │   │   ├── timers/                # Máquina de sesiones: modos, transiciones, contrato
+│   │   │   ├── presence/              # Política de inactividad, niveles, escalada
+│   │   │   └── analytics/             # Métricas, agregaciones, rachas
 │   │   └── tests/
 │   │
-│   ├── tpt-daemon/                    # Adaptadores OS + event loop
+│   ├── tpt-daemon/                    # Adaptadores + event loop
 │   │   ├── src/
 │   │   │   ├── main.rs
-│   │   │   ├── adapters/              # Hyprland, /proc, idle, sqlite, toml, clock
-│   │   │   ├── engine.rs              # Orquestación captura → categoriza → persiste
+│   │   │   ├── adapters/              # hypridle hook, sqlite, toml, clock, notifier
+│   │   │   ├── engine.rs              # Orquestación sesión → presencia → persistencia
 │   │   │   └── ipc_server.rs          # Servidor UDS
 │   │   └── tests/
 │   │
@@ -64,51 +66,37 @@ tp-cro/
 │   │   ├── src/
 │   │   │   ├── main.rs
 │   │   │   ├── app.rs                 # Orquestación
-│   │   │   ├── views/                 # Dashboard, timer, analytics, modales
+│   │   │   ├── views/                 # Hoy, Timer, Métricas, Actividades, Historial, Config
 │   │   │   └── ipc_client.rs
 │   │   └── tests/
 │   │
 │   └── tpt-cli/                       # Cliente de control/report/import (D1)
 │       ├── src/
 │       │   ├── main.rs
-│       │   ├── commands/              # status, focus, pomodoro, report, import
+│       │   ├── commands/              # status, session, activity, report, import, daemon
 │       │   └── ipc_client.rs
 │       └── tests/
 │
 ├── docs/                              # Documentación (ver docs/index.md)
-├── .github/workflows/ci.yml           # CI (fmt + clippy + test)
-└── config/                            # (Fase 10) unit systemd, PKGBUILD
+└── .github/workflows/ci.yml           # CI (fmt + clippy + test)
 ```
 
 ---
 
 ## Crate `tpt-core` — Puertos (traits)
 
-Hexagonal: el dominio NO depende del OS. Los adaptadores los implementan en `tpt-daemon`.
+Hexagonal: el dominio NO depende del OS (D2).
 
 | Puerto | Responsabilidad | Adaptador (daemon) |
 |--------|-----------------|--------------------|
-| `WindowSource` | Evento de ventana activa (class, title, pid, pwd) | `HyprlandWindowSource` |
-| `IdleSource` | Señal de inactividad input | `HyprlandIdleSource` (sin libwayland) + fallback |
-| `Clock` | Tiempo monotónico y wall-clock | `SystemClock` |
-| `Store` | Persistencia (logs, sesiones, agregados, retención) | `SqliteStore` |
+| `Clock` | Monotónico + wall-clock; detección de salto | `SystemClock` |
+| `PresenceSource` | Idle / active / locked / unlocked / suspended / resumed | `HypridleHookSource` + `ClockGapSource` |
+| `Store` | Persistencia (actividades, entradas, sesiones, notas) | `SqliteStore` |
 | `ConfigSource` | Carga/validación de configuración | `TomlConfig` |
-| `Notifier` | Notificaciones del daemon (fatiga, avisos) | `NotifySender` |
+| `Notifier` | Avisos del daemon (escalada, fin de bloque) | `NotifySender` |
 | `IpcTransport` | Transporte UDS compartido | `UnixSocketTransport` |
 
----
-
-## Modelo de Tracking — 3 Capas
-
-Tres responsabilidades separadas. Detalle y porqué → `ADR-008-tracking-layers.md`.
-
-| Capa | Pregunta | Dónde vive | Lista de apps |
-|------|----------|------------|---------------|
-| 1. Categorización (pasivo) | ¿productivo o distracción? | `config.toml` (`[[categories]]`, `[[rules]]`) | No — reglas globales |
-| 2. Asignación a tarea/proyecto | ¿a qué se acredita el tiempo? | `$PWD` (`/proc/<pid>/cwd`) o tarea activa | No |
-| 3. Blocklist (enforcement) | ¿qué NO puedo abrir en sesión? | `task_blocked_apps` (por tarea) | Sí — apps prohibidas |
-
-El daemon registra todo en `window_activity_logs`; el motor de relojes cuenta **observado vs productivo** (productivo = categorías `is_productive`, sin idle) y **no conoce apps**. La blocklist solo actúa durante una sesión activa.
+Detalle del cambio de puertos → `ADR-003-hexagonal-ports.md`.
 
 ---
 
@@ -116,10 +104,12 @@ El daemon registra todo en `window_activity_logs`; el motor de relojes cuenta **
 
 | Crate | Dependencias |
 |-------|--------------|
-| `tpt-core` | `serde`, `serde_json`, `toml`, `regex`, `thiserror`, `rusqlite` (bundled) |
-| `tpt-daemon` | `tpt-core`, `serde_json`, `libc` (proc), `nix` (socket) |
+| `tpt-core` | `serde`, `serde_json`, `toml`, `thiserror` |
+| `tpt-daemon` | `tpt-core`, `serde_json`, `rusqlite` (bundled), `nix` |
 | `tpt-tui` | `tpt-core`, `ratatui`, `crossterm`, `serde_json` |
 | `tpt-cli` | `tpt-core`, `serde_json`, `clap` |
+
+> **Regla:** ninguna dependencia entra sin justificar su costo en memoria (ver `AGENTS.md`). No se usa tokio ni ningún runtime async.
 
 ---
 
@@ -128,43 +118,74 @@ El daemon registra todo en `window_activity_logs`; el motor de relojes cuenta **
 Comunicación via **Unix domain socket** en `$XDG_RUNTIME_DIR/tpt.sock`, permisos `0600` (D4). Mensajes JSON con framing de longitud. Protocolo versionado (`protocol_version` + `min_supported` en el handshake).
 
 ```
-TUI/CLI (cliente)                     Daemon (servidor)
-    │                                      │
-    ├─── {"v":1,"type":"status"} ────────▶│
-    │◀── {"v":1,"type":"status_response", │
-    │      "timer":{...},"cooldown":300} ──┤
-    │                                      │
-    ├─── {"v":1,"type":"focus_start",     │
-    │      "mode":"FOCUS","minutes":45} ──▶│
-    │◀── {"v":1,"type":"ok"} ────────────┤
+TUI/CLI (cliente)                        Daemon (servidor)
+    │                                        │
+    ├─── {"v":1,"type":"status"} ───────────▶│
+    │◀── {"v":1,"type":"status_response",    │
+    │      "session":{...},"remaining":312}──┤
+    │                                        │
+    ├─── {"v":1,"type":"session_start",      │
+    │      "activity_id":7,"mode":"FOCUS"}──▶│
+    │◀── {"v":1,"type":"ok"} ────────────────┤
 ```
 
-Tipos principales: `status`, `status_response`, `focus_start`, `focus_abort`, `timer_adjust`, `task_switch`, `pomodoro_*`, `flowtime_*`, `blocklist_event`, `ok`, `error`.
+Tipos principales: `status`, `status_response`, `session_start`, `session_extend`, `session_abort`, `session_switch_activity`, `break_skip`, `presence_event`, `activity_*`, `notes_list`, `daemon_stop`, `ok`, `error`.
 
 ---
 
-## Esquema SQLite
+## Modelo de Datos
 
-Esquema completo (categorías, tareas, blocklist por tarea, logs, sesiones, agregados) → `docs/adr/ADR-002-sqlite-schema.md`.
+Esquema SQLite completo → `ADR-002-sqlite-schema.md`.
 
-Resumen:
-- `categories` — categorías + `is_productive`.
-- `recurring_tasks` — rutinas con meta de minutos.
-- `task_blocked_apps` — **blocklist por tarea** (D13).
-- `window_activity_logs` — logs crudos de actividad (raw, retención corta).
-- `focus_sessions` — sesiones con modo, productivo vs observado, reflexión, causa de aborto.
-- `daily_aggregates` / `hourly_aggregates` — agregados para analíticas y retención modular (D17).
+Resumen: `projects`, `activities`, `tags`, `activity_tags`, `time_entries` (manual/session/imported), `sessions`, `session_additions`, `session_gaps`, `commitment_contracts`.
+
+Sin tablas de agregados ni tiers de retención: las métricas se calculan con `GROUP BY` sobre `sessions` + `time_entries` (`ADR-002`).
 
 ---
 
-## Persistencia y BTRFS (D18)
+## Presencia (idle, lock, power)
 
-- DB en `~/.local/share/tpt/metrics.db`, WAL mode.
-- `chattr +C` (nodatacow) en el directorio de la DB **antes** de crearla.
-- Checkpoint `wal_checkpoint(TRUNCATE)` periódico.
-- `auto_vacuum=INCREMENTAL` + `incremental_vacuum(N)`; nunca `VACUUM` completo.
-- Snapshots BTRFS: excluir la DB o usar backup consistente (API `.backup` / `VACUUM INTO`).
-- Retención por tiers configurable en `config.toml` (ver `ADR-006-data-retention-btrfs.md`).
+Fuente primaria: **hooks de `hypridle`** (`on-timeout`, `on-resume`, `on_lock_cmd`, `on_unlock_cmd`), que ejecutan `tpt-cli presence --state <s>` contra el socket del daemon.
+Backstop: **salto de reloj** (monotónico vs wall-clock) para suspensión/apagado.
+
+Consecuencia: **cero dependencias nuevas**, nada de D-Bus ni libwayland. Argumentación completa → `ADR-008-presence-and-penalties.md`.
+
+---
+
+## Persistencia y BTRFS
+
+- DB en `${XDG_DATA_HOME:-~/.local/share}/tpt/metrics.db`, WAL mode.
+- **BTRFS:** `chattr +C` (nodatacow) en el directorio de la DB **antes** de crearla; sin esto hay write amplification por CoW.
+- Checkpoint `wal_checkpoint(TRUNCATE)` periódico; `auto_vacuum=INCREMENTAL` + `incremental_vacuum`.
+- **Nunca** `VACUUM` completo (reescribe todo el archivo; pésimo en CoW).
+- Snapshots BTRFS: excluir la DB o usar backup consistente (`VACUUM INTO`).
+
+---
+
+## Estrategia de Testing
+
+```
+        ╱╲
+       ╱  ╲      Funcional   — daemon real + Hyprland (opcional en CI)
+      ╱────╲
+     ╱      ╲    Integración — adaptadores con fakes + SQLite temporal
+    ╱────────╲               — cliente/servidor IPC real (socket UDS)
+   ╱          ╲
+  ╱────────────╲ Unitarios  — tpt-core `#[cfg(test)]`: contrato, presencia,
+ ────────────────             config round-trip, métricas
+```
+
+**Reglas:** test ANTES de implementar (RED → GREEN → REFACTOR). Esfera de tests por capa (la de arriba se construye sobre la de abajo). Nada de lógica en `tpt-daemon` que no esté cubierta por un fake.
+
+---
+
+## CI (GitHub Actions)
+
+Implementado en `.github/workflows/ci.yml`. Corre en cada push y PR, con caché de cargo:
+
+1. `cargo fmt --all --check`
+2. `cargo clippy --workspace --all-targets --locked -- -D warnings`
+3. `cargo test --workspace --all-targets --locked`
 
 ---
 
@@ -197,15 +218,15 @@ WantedBy=default.target
 
 ## Decisiones de Arquitectura
 
-Resumen de decisiones — el detalle vive en `docs/adr/`.
+Resumen — el detalle vive en `docs/adr/`.
 
 | Decisión | ADR |
 |----------|-----|
 | Arquitectura general, persistencia e IPC | `ADR-001-architecture-ipc-persistence.md` |
 | Esquema SQLite | `ADR-002-sqlite-schema.md` |
 | Puertos/adaptadores (hexagonal) | `ADR-003-hexagonal-ports.md` |
-| Modos de reloj y penalizaciones | `ADR-004-clock-modes-and-penalties.md` |
-| Inactividad y blocklist | `ADR-005-inactivity-and-blocklist.md` |
-| Datos y BTRFS | `ADR-006-data-retention-btrfs.md` |
-| Crate `tpt-cli` | `ADR-007-tpt-cli-crate.md` |
-| Modelo de tracking en 3 capas | `ADR-008-tracking-layers.md` |
+| Modos de reloj, contrato y penalizaciones | `ADR-004-clock-modes-and-penalties.md` |
+| Crate `tpt-cli` | `ADR-005-tpt-cli-crate.md` |
+| Branching y protección de ramas | `ADR-006-branching-and-protection.md` |
+| Pivote a *timer-first* | `ADR-007-timer-first-pivot.md` |
+| Presencia: idle, lock y power | `ADR-008-presence-and-penalties.md` |

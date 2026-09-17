@@ -1,40 +1,52 @@
 # ADR-003: Arquitectura Hexagonal — Puertos y Adaptadores
 
 - **Estado**: Aceptado
-- **Fecha**: 2026-09-10
+- **Fecha**: 2026-09-14 · *(reestructurado por el pivote timer-first, `ADR-007`)*
 
 ## Contexto
 
-TPT depende del OS (Hyprland IPC, `/proc`, idle, SQLite, reloj). Si el dominio conoce esas dependencias, no es testeable sin Wayland/X11 y queda acoplado a Hyprland. Además el objetivo de bajo consumo exige que el proceso crítico no arrastre dependencias de UI/reporte.
+El dominio (contrato de tiempo, penalizaciones, métricas) no debe depender del SO ni de Hyprland. Además, con el pivote cambió qué señales externas existen: ya no hay ventanas ni `/proc`, pero sí hay **presencia**.
 
 ## Decisión
 
-Arquitectura hexagonal (D2):
+Arquitectura hexagonal (D2): puertos (traits) en `tpt-core`, adaptadores en `tpt-daemon` y en los clientes.
 
-- **`tpt-core`** = dominio puro + **puertos** (traits), sin dependencias de SO:
-  - `WindowSource` — ventana activa (class, title, pid, pwd).
-  - `IdleSource` — señal de inactividad input.
-  - `Clock` — monotónico + wall-clock.
-  - `Store` — repositorio (logs, sesiones, agregados, retención).
-  - `ConfigSource` — carga/validación de configuración.
-  - `Notifier` — notificaciones del daemon.
-  - `IpcTransport` — transporte UDS compartido.
-- **`tpt-daemon`** = adaptadores: `HyprlandWindowSource`, `HyprlandIdleSource` (sin libwayland, D3), `SqliteStore`, `TomlConfig`, `SystemClock`.
-- **`tpt-tui` / `tpt-cli`** = adaptadores *driving* (clientes IPC).
-- Errores tipados con `thiserror` en el dominio.
+### Puertos vigentes
+
+| Puerto | Responsabilidad | Adaptador |
+|--------|-----------------|-----------|
+| `Clock` | Tiempo monotónico + wall-clock; detecta saltos por suspensión | `SystemClock` |
+| `PresenceSource` | Eventos de presencia: `Idle{seconds}` · `Active` · `Locked` · `Unlocked` · `Suspended{seconds}` · `Resumed` | `HypridleHookSource` + `ClockGapSource` |
+| `Store` | Actividades, entradas, sesiones, gaps, notas, contrato | `SqliteStore` |
+| `ConfigSource` | Carga y validación de configuración | `TomlConfig` |
+| `Notifier` | Avisos (escalada, fin de bloque, cooldown) | `NotifySender` |
+| `IpcTransport` | Transporte UDS compartido | `UnixSocketTransport` |
+
+### Puertos retirados
+
+| Puerto | Motivo |
+|--------|--------|
+| `WindowSource` | El tracking de ventanas se abandonó (`ADR-007`) |
+| `IdleSource` | Reemplazado por `PresenceSource`, que unifica idle + lock + suspensión |
+
+### Reglas de diseño
+
+- **Los traits son pequeños y object-safe** (se usan como `Box<dyn _>` desde el daemon).
+- **Todo adaptador tiene su fake** en `tpt-core` o en `tests/` para poder testear el dominio sin Hyprland, sin Wayland y sin disco.
+- **Errores tipados con `thiserror`** en el dominio; nunca `unwrap`/`expect`/`panic` en `src/` (ver `AGENTS.md`).
 
 ## Alternativas consideradas
 
-- **Dominio concreto acoplado a Hyprland**: rápido de escribir, pero no testeable fuera de la sesión del usuario y difícil de reemplazar.
-- **Librería de abstracción genérica (p. ej. `wayland-client` genérico)**: liga memoria/deps al daemon sin necesidad.
+- **Un solo trait genérico de "fuente de eventos"**: evita proliferación, pero mezcla responsabilidades y hace los tests más frágiles. Descartada.
+- **Mantener `IdleSource` y agregar `LockSource`/`PowerSource` por separado**: tres traits para una sola pregunta ("¿el usuario está presente?"). `PresenceSource` unifica.
 
 ## Consecuencias
 
-- El core se testea en CI sin X11/Wayland usando fakes.
-- Cambiar de Hyprland a otro compositor = nuevo adaptador, sin tocar el dominio.
-- El daemon no arrastra dependencias de TUI/CLI (reporte/import) → RAM y build acotados.
-- Costo: definir traits desde el inicio (Fase 1).
+- El core se testea en CI sin compositor ni sesión gráfica.
+- Cambiar de compositor o de gestor de idle = nuevo adaptador, sin tocar el dominio.
+- El daemon no arrastra dependencias de TUI/CLI.
+- Costo: definir los traits antes de implementar (Fase 1).
 
 ## Referencias
 
-- `docs/architecture.md` (tabla de puertos) · `docs/vision.md` (D2) · `docs/phases.md` (Fase 1)
+- `docs/architecture.md` (Puertos) · `ADR-001` · `ADR-008` · `ADR-007`

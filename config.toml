@@ -1,28 +1,30 @@
 # TPT — Configuración por defecto/ejemplo
+#
+# El nivel de estrictez declarado acá es la INTENCIÓN. El compromiso vigente
+# (nivel + término) vive en la DB con checksum — ver ADR-004.
 
 [general]
-idle_timeout_seconds = 300
 db_path = "~/.local/share/tpt/metrics.db"
 socket_path = "$XDG_RUNTIME_DIR/tpt.sock"
+notes_retention_days = 365        # 0 = nunca eliminar notas
 
 [timers]
 default_preset = "preset-25-5"
-max_short_break_minutes = 15
-max_long_break_minutes = 20
 cooldown_minutes = 5
-max_warnings_per_session = 2
-violation_grace_seconds = 180   # countdown 3-5 min tras aviso de app bloqueada
+max_short_break_minutes = 15      # regla dura
+max_long_break_minutes = 20       # regla dura
+max_warnings_per_session = 3
+# 3 capas del modo foco (ADR-004):
+#   soft   → layout a pantalla completa + beacon + confirmación al salir
+#   locked → bloquea la navegación de la TUI durante la sesión
+focus_view = "soft"
 
-[idle]
-warn_after_seconds = 300        # aviso informativo; NUNCA penaliza
-
-# Presets editables (D19). Regla dura: descanso corto <=15, largo <=20.
-# El clásico 52/17 queda clampado a descanso corto 15 (52-15).
+# Presets ajustables (D13). Regla dura: corto <=15, largo <=20.
 [[timer_presets]]
 name = "preset-25-5"
 work_minutes = 25
 short_break_minutes = 5
-long_break_minutes = 15
+long_break_minutes = 20
 cycles_before_long = 4
 
 [[timer_presets]]
@@ -33,9 +35,9 @@ long_break_minutes = 20
 cycles_before_long = 2
 
 [[timer_presets]]
-name = "preset-52-15"
-work_minutes = 52
-short_break_minutes = 15
+name = "preset-75-12"
+work_minutes = 75
+short_break_minutes = 12
 long_break_minutes = 20
 cycles_before_long = 2
 
@@ -46,39 +48,32 @@ short_break_minutes = 15
 long_break_minutes = 20
 cycles_before_long = 1
 
-[fatigue]
-max_continuous_focus_minutes = 50
-break_duration_minutes = 10
+[presence]
+# Nivel de estrictez: Off | L0 | L1 | L2
+#   Off → sin detección de presencia (se acredita todo)
+#   L0  → detecta y no acredita el gap excedente; sin castigos (default propuesto)
+#   L1  → además aborta la sesión si el no-acreditado supera severe_ratio
+#   L2  → además crédito 0 + cooldown en casos extremos
+level = "L0"
 
-[retention]
-raw_events_days = 30
-hourly_aggregates_days = 90
-daily_aggregates_keep = true
+# Gracia: los primeros N segundos de un gap de IDLE se acreditan igual
+# (no tocar el teclado puede ser pensar). No aplica a lock ni a suspensión.
+grace_seconds = 180
 
-[[categories]]
-name = "Enfoque / Dev"
-color_hex = "#50fa7b"
-is_productive = true
+# Umbrales de aviso. Son INFORMATIVOS: nunca descuentan tiempo por sí solos.
+warn_after_seconds = 180
+strong_warn_after_seconds = 300
+gap_after_seconds = 420
 
-[[categories]]
-name = "Distracción"
-color_hex = "#ff5555"
-is_productive = false
+# Disparadores del nivel 2 (casos extremos) — ver ADR-004.
+severe_gap_seconds = 1200         # un gap continuo de 20 min
+severe_ratio = 0.40               # 40% del target sin acreditar
+requires_prior_strike = true      # exige un aborto previo por idle/lock en 24 h
 
-[[rules]]
-category = "Enfoque / Dev"
-match_type = "regex"
-target = "class"
-pattern = "^(kitty|Alacritty|Code|neovim)$"
+[commitment]
+min_term_days = 1                 # término mínimo al subir de nivel
 
-[[rules]]
-category = "Enfoque / Dev"
-match_type = "pwd_prefix"
-target = "pwd"
-pattern = "/home/isaac/projects/"
-
-[[rules]]
-category = "Distracción"
-match_type = "regex"
-target = "title"
-pattern = ".*(YouTube|Reddit|Twitter|X).* "
+[notifications]
+desktop = true                    # notificación al terminar un bloque
+sound = true
+sound_file = ""                   # vacío = sonido por defecto del sistema
