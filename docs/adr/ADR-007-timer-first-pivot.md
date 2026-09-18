@@ -38,7 +38,7 @@ El objetivo pasó a ser: **un Super Productivity, pero con un motor de sesiones 
 
 ### Se agrega
 
-- **`PresenceSource`** (`ADR-008`): idle, lock y suspensión/apagado.
+- **`PresenceSource`** (`ADR-008`): idle, pantalla apagada y suspensión/apagado.
 - **Niveles de estrictez** y **contrato de compromiso** (`ADR-004`).
 - **Vista `Historial`** para notas y puntajes agrupados por fecha.
 

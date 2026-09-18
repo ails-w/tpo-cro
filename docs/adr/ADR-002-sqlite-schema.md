@@ -68,7 +68,7 @@ CREATE TABLE sessions (
     started_at TEXT NOT NULL,
     ended_at TEXT,
     aborted_with TEXT CHECK(aborted_with IN
-        ('USER','IDLE','LOCKED','SUSPENDED','DAEMON_KILLED')),
+        ('USER','IDLE','SCREEN_OFF','SUSPENDED','DAEMON_KILLED')),
     accumulated_gap_seconds INTEGER NOT NULL DEFAULT 0,
     gap_ratio REAL NOT NULL DEFAULT 0,
     rating INTEGER CHECK(rating BETWEEN 1 AND 10),    -- opcional
@@ -117,7 +117,7 @@ CREATE TABLE session_additions (
 CREATE TABLE session_gaps (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     session_id INTEGER NOT NULL REFERENCES sessions(id) ON DELETE CASCADE,
-    kind TEXT NOT NULL CHECK(kind IN ('IDLE','LOCKED','SUSPENDED')),
+    kind TEXT NOT NULL CHECK(kind IN ('IDLE','SCREEN_OFF','SUSPENDED')),
     seconds INTEGER NOT NULL CHECK(seconds >= 0),
     deducted_seconds INTEGER NOT NULL CHECK(deducted_seconds >= 0),
     qualified INTEGER NOT NULL DEFAULT 0,   -- 1 si superó min_gap_seconds

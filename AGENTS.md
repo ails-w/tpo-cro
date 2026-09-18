@@ -11,7 +11,7 @@ Bienvenido al repositorio de **Terminal Productivity Tracker (TPT)**. Como agent
 
 1. **Eficiencia Extrema:** Minimizar el consumo de memoria del daemon (sin runtime async pesado). Evalúa el costo de memoria de cada crate antes de sugerir su adición a `Cargo.toml`, y mide el consumo real durante el desarrollo (Fase 10) antes de declarar límites.
 2. **Cero Tolerancia a Panics:** Se prohíbe el uso de `.unwrap()`, `.expect()` o `panic!()` en código de producción (`src/`). Todo error debe propagarse usando `thiserror` (en librerías/core) o manejarse con resiliencia en la app.
-3. **Desacoplamiento del Sistema Operativo:** Toda señal externa — presencia (idle, bloqueo de pantalla, suspensión), reloj, persistencia o notificaciones — DEBE estar aislada detrás de un `Trait` (Inversion of Control). Arquitectura hexagonal: puertos en `tpt-core`, adaptadores en `tpt-daemon` (ver `docs/adr/ADR-003-hexagonal-ports.md`).
+3. **Desacoplamiento del Sistema Operativo:** Toda señal externa — presencia (idle, pantalla apagada, suspensión), reloj, persistencia o notificaciones — DEBE estar aislada detrás de un `Trait` (Inversion of Control). Arquitectura hexagonal: puertos en `tpt-core`, adaptadores en `tpt-daemon` (ver `docs/adr/ADR-003-hexagonal-ports.md`).
 
 ---
 

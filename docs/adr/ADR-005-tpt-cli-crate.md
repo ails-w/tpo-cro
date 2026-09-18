@@ -5,7 +5,7 @@
 
 ## Contexto
 
-Hay operaciones que no necesitan la TUI: consultar estado, extender una sesión, generar reportes, importar datos y controlar el ciclo de vida del daemon. Además, `hypridle` necesita un **punto de entrada ejecutable** para reportar eventos de presencia (`ADR-008`).
+Hay operaciones que no necesitan la TUI: consultar estado, extender una sesión, generar reportes, importar datos y controlar el ciclo de vida del daemon. Además, el `caelestia-shell` necesita un **punto de entrada ejecutable** para reportar eventos de presencia (`ADR-008`).
 
 ## Decisión
 
@@ -19,7 +19,7 @@ Hay operaciones que no necesitan la TUI: consultar estado, extender una sesión,
 | Notas | `tpt-cli notes --range <d\|w\|m>` |
 | Reportes | `tpt-cli report --range daily\|weekly\|monthly --format json\|csv` |
 | Import | `tpt-cli import --super-productivity <save.json> [--dry-run]` |
-| **Presencia** | `tpt-cli presence --state idle\|active\|locked\|unlocked\|resumed` ← **hook para `hypridle`** |
+| **Presencia** | `tpt-cli presence --state idle\|active\|screen-off\|resumed` ← **hook para `caelestia-shell`** |
 | **Daemon** | `tpt-cli daemon start` · `stop` · `restart` · `status` |
 
 ### Ciclo de vida del daemon
@@ -30,12 +30,12 @@ Hay operaciones que no necesitan la TUI: consultar estado, extender una sesión,
 
 ## Alternativas consideradas
 
-- **Fusionar CLI dentro de la TUI**: obliga a levantar la TUI para automatizar o para que `hypridle` reporte. Descartada.
+- **Fusionar CLI dentro de la TUI**: obliga a levantar la TUI para automatizar o para que el `caelestia-shell` reporte. Descartada.
 - **Scripts shell sueltos**: sin validación, sin tipado, sin tests. Descartada.
 
 ## Consecuencias
 
-- `hypridle` reporta presencia invocando un binario estable, sin acoplarse a la TUI.
+- El `caelestia-shell` reporta presencia invocando un binario estable, sin acoplarse a la TUI.
 - El reporte y el import se pueden automatizar (cron, scripts) sin abrir interfaz.
 - El daemon es apagable desde terminal **y** desde la TUI, siempre de forma ordenada.
 

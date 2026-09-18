@@ -44,13 +44,13 @@ Modelar la meta como un `u32` mutable en la sesión y "validar" en el handler qu
 
 ---
 
-## Presencia sin dependencias: hooks de `hypridle` + salto de reloj
+## Presencia sin dependencias: hooks de la shell + salto de reloj
 
 ### Qué es
 
 Un puerto (`PresenceSource`) que responde una sola pregunta — *¿el usuario estuvo presente?* — con dos adaptadores:
 
-- **`HypridleHookSource`**: `hypridle` ejecuta `tpt-cli presence --state <s>` en sus `on-timeout` / `on-resume` / `on_lock_cmd` / `on_unlock_cmd`.
+- **`QuickshellHookSource`**: entradas propias en `general.idle.timeouts` de `~/.config/caelestia/shell.json` que ejecutan `tpt-cli presence --state <s>`.
 - **`ClockGapSource`**: compara el salto del reloj de pared contra el monotónico.
 
 ### Qué problema resuelve
@@ -59,21 +59,36 @@ En Wayland, una app no puede consultar su idle time: el compositor lo sabe y no 
 
 ### Para qué sirve en este proyecto
 
-Es lo que permite detectar idle, bloqueo de pantalla y suspensión **sin** D-Bus ni libwayland. `hypridle` ya es el cliente Wayland que consume `ext-idle-notify-v1`: en vez de duplicar ese trabajo, consumimos sus hooks.
+Es lo que permite detectar idle, pantalla apagada y suspensión **sin** D-Bus ni libwayland. El `caelestia-shell` (quickshell) ya crea un `IdleMonitor` por cada timeout de su config — protocolo `ext-idle-notify-v1` — así que en vez de duplicar ese trabajo consumimos sus hooks.
 
-El backstop del reloj cubre lo que `hypridle` no puede: `CLOCK_MONOTONIC` no avanza durante la suspensión, así que `(Δwall − Δmono)` grande significa que la máquina estuvo apagada o dormida. Es verdad del kernel, sin APIs del SO.
+**El bloqueo de pantalla se ignora**: con el lock a los 5 minutos, tratarlo como ausencia mataría cualquier pausa de lectura. La señal severa es la **pantalla apagada** (`dpms off`), que recién llega a los 12 minutos.
+
+El backstop del reloj cubre lo que la shell no puede: `CLOCK_MONOTONIC` no avanza durante la suspensión, así que `(Δwall − Δmono)` grande significa que la máquina estuvo apagada o dormida. Es verdad del kernel, sin APIs del SO.
 
 ### Cómo se usa
 
-```ini
-# ~/.config/hypr/hypridle.conf
-listener { timeout = 420 ; on-timeout = tpt-cli presence --state idle --seconds 420
-                          ; on-resume  = tpt-cli presence --state active }
+```json
+// ~/.config/caelestia/shell.json
+{ "timeout": 420,
+  "idleAction":   ["tpt-cli", "presence", "--state", "idle"],
+  "returnAction": ["tpt-cli", "presence", "--state", "active"],
+  "inhibitWhenAudio": false }
 ```
+
+Las acciones en **array** no coinciden con ninguna acción conocida del shell y caen a `Quickshell.execDetached`, así que ejecutan el binario tal cual.
 
 ### Error común
 
-Ir directo a **logind por D-Bus** asumiendo que `IdleHint` funciona. **Hyprland no implementa D-Bus**: nunca llama `SetIdleHint()`, así que esa propiedad queda muerta. Se paga una dependencia (y el runtime async que trae `zbus`) para leer un valor que nunca cambia.
+Dos, y los dos son silenciosos:
+
+1. **Ir directo a logind por D-Bus.** En esta sesión `CanIdle=yes` y `CanLock=yes`, pero **nadie llama `SetIdleHint()` ni `SetLockedHint()`**: quickshell no habla D-Bus. Esas propiedades quedan en `no` para siempre, y leerlas es código muerto con dependencias encima.
+2. **Dejar `inhibitWhenAudio` global en `true`.** El gate global de `IdleMonitors.qml` se evalúa **primero**: si está en `true`, con audio sonando **ningún** monitor corre — incluido el hook de TPT. Se apaga el global y se pone `inhibitWhenAudio: true` en cada entrada de lock/dpms/suspend, así el video no bloquea la pantalla pero TPT sí ve la presencia.
+
+### Referencias
+
+- `docs/adr/ADR-008-presence-and-penalties.md` · `docs/architecture.md` (Presencia)
+- `~/.config/caelestia/shell.json` · `/etc/xdg/quickshell/caelestia/modules/IdleMonitors.qml`
+
 
 ### Referencias
 

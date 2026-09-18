@@ -14,7 +14,7 @@ Staying focused is not a matter of willpower — it is a matter of **commitment 
 - **Day queue** — activities scheduled weekdays, specific days, all week, or within a date range
 - **Three session modes** — Flowtime (free, pausable), Pomodoro (cycles, adjustable), Focus (hard, immutable contract)
 - **Additive contract** — you can only *extend* a session, never shorten it. No pause in Pomodoro or Focus
-- **Presence tracking** — idle, screen lock and suspend are detected; absent time is simply not credited
+- **Presence tracking** — idle, screen-off and suspend are detected; absent time is simply not credited
 - **Configurable strictness** — `Off` / `L0` / `L1` / `L2`, with a time-boxed commitment that blocks downgrades
 - **Manual time** — log work done away from the timer; tagged, and counted in totals
 - **Reflection** — optional 1–10 focus rating and notes on any session, browsable in a date-grouped history
@@ -34,7 +34,7 @@ No window tracking. No app categorization. No app blocklist. There is no enforce
 | IPC | Unix domain socket + length-framed JSON | Fast, dependency-free, local-only, versioned protocol |
 | Persistence | rusqlite (WAL) | Metrics are the core: SQL aggregation beats hand-rolled code |
 | Config | TOML | Human-readable, defaults-first |
-| Presence | hypridle hooks + clock-gap detection | Zero new dependencies, no D-Bus, no libwayland |
+| Presence | caelestia-shell (quickshell) idle hooks + clock-gap detection | Zero new dependencies, no D-Bus, no libwayland |
 | Errors | thiserror | No panics in production code |
 
 ## Architecture
@@ -56,7 +56,7 @@ Hexagonal: domain ports live in `tpt-core`; OS adapters live in `tpt-daemon`. **
 
 ## Setup
 
-**Requirements:** Rust stable, Arch Linux (Wayland/Hyprland), systemd, `hypridle`.
+**Requirements:** Rust stable, Arch Linux (Wayland/Hyprland), systemd, and the `caelestia-shell` (quickshell) reporting presence.
 
 ```bash
 git clone git@github.com:ails-w/tpo-cro.git
@@ -88,7 +88,7 @@ cargo run -p tpt-cli -- import --super-productivity ~/.config/superProductivity/
 - **Additive contract**: a session can only grow. You cannot shorten your way out of a commitment.
 - **The daemon owns the session**: closing the TUI does not abort. Aborting costs a challenge, a reflection and a cooldown.
 - **Default is kind**: L0 detects absence and stops crediting it, but never punishes. Hard penalties are opt-in and time-boxed.
-- **Presence without dependencies**: `hypridle` already solved Wayland idle; we consume its hooks and use clock-gap detection as a kernel-level backstop.
+- **Presence without dependencies**: the `caelestia-shell` already solved Wayland idle; we consume its idle hooks and use clock-gap detection as a kernel-level backstop.
 - **SQLite over JSON**: metrics are the product, and SQL aggregation is the right tool. JSON is only for import/export.
 
 ## Roadmap
@@ -98,7 +98,7 @@ cargo run -p tpt-cli -- import --super-productivity ~/.config/superProductivity/
 - [ ] Phase 2 — SQLite store
 - [ ] Phase 3 — Activities, projects, tags, schedule & queue
 - [ ] Phase 4 — Session engine and contract
-- [ ] Phase 5 — Presence: idle, lock and suspend
+- [ ] Phase 5 — Presence: idle, screen-off and suspend
 - [ ] Phase 6 — Versioned IPC protocol
 - [ ] Phase 7 — TUI
 - [ ] Phase 8 — Metrics and reports

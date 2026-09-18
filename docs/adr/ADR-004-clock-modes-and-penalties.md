@@ -66,10 +66,10 @@ descuento("excess") = max(0, gap − min_gap)
 | Gap abre a | — | 7 min | 7 min | 7 min |
 | Deduce el gap | ❌ | ✅ | ✅ | ✅ |
 | Aborta por gap acumulado | — | ❌ | **35%** | **25%** |
-| Aborta por lock | — | ❌ | ❌ (acumula) | ✅ inmediato |
+| Aborta por **pantalla apagada** (`dpms off`) | — | ❌ | ❌ (acumula) | ✅ inmediato |
 | Aborta por suspensión | — | ❌ | ✅ | ✅ |
 | Aborta por kill del daemon | — | — | ✅ | ✅ |
-| Crédito · aborto por **inactividad** | — | — | conserva | 0 si lock o gap único ≥30% |
+| Crédito · aborto por **inactividad** | — | — | conserva | 0 si pantalla apagada o gap único ≥30% |
 | Crédito · aborto **manual** | — | — | **conserva** | **conserva** |
 | Deuda | — | ❌ | **5 min** +1/aborto (tope 20) | **8 min** +1/aborto (tope 25) |
 | Bloquea | — | — | la actividad abortada | la actividad abortada |

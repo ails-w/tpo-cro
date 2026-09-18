@@ -24,8 +24,8 @@ La app gestiona **contratos de tiempo** sobre actividades. El compromiso es el p
    - Un **hilo escritor dedicado** con canal MPSC (`std::sync::mpsc`) para no bloquear el loop de sesión.
    - Esquema y estrategia de agregación → `ADR-002`.
 
-4. **Presencia (idle / lock / power)**
-   - Fuente primaria: hooks de `hypridle`. Backstop: salto de reloj monotónico vs wall-clock.
+4. **Presencia (idle / pantalla apagada / power)**
+   - Fuente primaria: hooks de `caelestia-shell` (quickshell). Backstop: salto de reloj monotónico vs wall-clock.
    - Detalle y argumentación → `ADR-008`.
 
 5. **Arquitectura hexagonal**

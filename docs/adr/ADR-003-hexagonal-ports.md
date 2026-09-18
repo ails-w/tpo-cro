@@ -16,7 +16,7 @@ Arquitectura hexagonal (D2): puertos (traits) en `tpt-core`, adaptadores en `tpt
 | Puerto | Responsabilidad | Adaptador |
 |--------|-----------------|-----------|
 | `Clock` | Tiempo monotónico + wall-clock; detecta saltos por suspensión | `SystemClock` |
-| `PresenceSource` | Eventos de presencia: `Idle{seconds}` · `Active` · `Locked` · `Unlocked` · `Suspended{seconds}` · `Resumed` | `HypridleHookSource` + `ClockGapSource` |
+| `PresenceSource` | Eventos de presencia: `Idle{seconds}` · `Active` · `ScreenOff` · `Suspended{seconds}` · `Resumed` | `QuickshellHookSource` + `ClockGapSource` |
 | `Store` | Actividades, entradas, sesiones, gaps, notas, contrato | `SqliteStore` |
 | `ConfigSource` | Carga y validación de configuración | `TomlConfig` |
 | `Notifier` | Avisos (escalada, fin de bloque, cooldown) | `NotifySender` |
@@ -27,7 +27,7 @@ Arquitectura hexagonal (D2): puertos (traits) en `tpt-core`, adaptadores en `tpt
 | Puerto | Motivo |
 |--------|--------|
 | `WindowSource` | El tracking de ventanas se abandonó (`ADR-007`) |
-| `IdleSource` | Reemplazado por `PresenceSource`, que unifica idle + lock + suspensión |
+| `IdleSource` | Reemplazado por `PresenceSource`, que unifica idle + pantalla apagada + suspensión |
 
 ### Reglas de diseño
 

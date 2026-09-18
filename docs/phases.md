@@ -250,11 +250,13 @@ Toda fase se documenta con las mismas secciones, sin excepción:
 
 ### Scope
 
-- `HypridleHookSource` (comandos `tpt-cli presence`) + `ClockGapSource` (salto monotónico vs wall-clock).
+- `QuickshellHookSource`: entradas propias en `general.idle.timeouts` de `~/.config/caelestia/shell.json` que ejecutan `tpt-cli presence`. **El `caelestia-shell` es el dueño del idle** (no `hypridle`).
+- `ClockGapSource` (salto monotónico vs wall-clock).
+- **El bloqueo de pantalla se ignora.** La señal severa es la **pantalla apagada** (`dpms off`).
 - **Gap a los 7 min**: por debajo no existe; desde ahí se acumula y descuenta.
 - Avisos **inmediatos** a los 3 y 5 min (informativos, nunca descuentan).
-- Niveles `L1` (aborta 35%) y `L2` (aborta 25%, lock inmediato) como presets de solo lectura.
-- Crédito al abortar: manual conserva; inactividad cero solo en L2 severo (lock o gap único ≥30%).
+- Niveles `L1` (aborta 35%) y `L2` (aborta 25%, pantalla apagada = aborto inmediato) como presets de solo lectura.
+- Crédito al abortar: manual conserva; inactividad cero solo en L2 severo (pantalla apagada o gap único ≥30%).
 - **Deuda de reparación:** 5/8 min +1 por aborto (topes 20/25), +5 min/día calculado, caducidad 15/7 días, cobro como entrada negativa.
 - **Refinanciación:** `pending_extra` acumulable (tope 40%) que se suma al target de la próxima sesión.
 - Puntaje obligatorio (1–7 en L1, 1–5 en L2) y notas obligatorias en L2.
@@ -274,20 +276,20 @@ Toda fase se documenta con las mismas secciones, sin excepción:
 ### Criterio de salida
 
 - [ ] Un gap por debajo de 7 min no descuenta ni acumula; uno mayor descuenta completo.
-- [ ] L1 aborta a 35% acumulado; L2 a 25% o al instante con lock.
+- [ ] L1 aborta a 35% acumulado; L2 a 25% o al instante con pantalla apagada.
 - [ ] Un aborto manual conserva el crédito pero crea deuda; uno de inactividad puede llevar el crédito a 0.
 - [ ] La deuda crece por cálculo (sin job) y al vencer deja una entrada negativa.
 - [ ] Refinanciar suma al target de la próxima sesión y no se puede esquivar.
-- [ ] Sin `hypridle`, la app funciona (degradación elegante, sin panics).
+- [ ] Sin el `caelestia-shell` reportando, la app funciona (degradación elegante, sin panics).
 
 ### Features (TDD)
 
 - [ ] `gap_below_threshold_is_ignored` (RED → GREEN)
 - [ ] `gap_above_threshold_deducts_full` (RED → GREEN)
-- [ ] `locked_gap_deducts_full_time` (RED → GREEN)
+- [ ] `screen_off_gap_deducts_full_time` (RED → GREEN)
 - [ ] `clock_jump_detected_as_suspend_gap` (RED → GREEN)
 - [ ] `l1_aborts_at_35_percent_accumulated` (RED → GREEN)
-- [ ] `l2_aborts_at_25_percent_and_lock_is_immediate` (RED → GREEN)
+- [ ] `l2_aborts_at_25_percent_and_screen_off_is_immediate` (RED → GREEN)
 - [ ] `l2_severe_abort_zeroes_credit_manual_keeps_it` (RED → GREEN)
 - [ ] `debt_grows_five_minutes_per_day_without_job` (RED → GREEN)
 - [ ] `debt_expiry_writes_negative_entry` (RED → GREEN)
@@ -322,7 +324,7 @@ Toda fase se documenta con las mismas secciones, sin excepción:
 
 - [ ] Handshake compatible; mismatch devuelve error tipado.
 - [ ] Los comandos de control llegan al motor y responden `ok`/`error`.
-- [ ] `hypridle` puede reportar presencia por CLI sin abrir la TUI.
+- [ ] El `caelestia-shell` puede reportar presencia por CLI sin abrir la TUI.
 
 ### Features (TDD)
 

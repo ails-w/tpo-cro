@@ -16,11 +16,11 @@
 │  ┌───────────────────────────────────────────────────────────┐ │
 │  │              tpt-daemon (background, systemd)              │ │
 │  │  Motor de sesiones · contrato · penalizaciones             │ │
-│  │  Presencia (hypridle hooks + salto de reloj)               │ │
+│  │  Presencia (quickshell hooks + salto de reloj)             │ │
 │  │  SQLite (WAL) · hilo escritor MPSC · mantenimiento         │ │
 │  └───────────────────────────────┬───────────────────────────┘ │
 │                                  ▼                             │
-│         Adaptadores: hypridle hook · clock · sqlite · toml      │
+│         Adaptadores: quickshell hook · clock · sqlite · toml    │
 └────────────────────────────────────────────────────────────────┘
 ```
 
@@ -57,7 +57,7 @@ tp-cro/
 │   ├── tpt-daemon/                    # Adaptadores + event loop
 │   │   ├── src/
 │   │   │   ├── main.rs
-│   │   │   ├── adapters/              # hypridle hook, sqlite, toml, clock, notifier
+│   │   │   ├── adapters/              # quickshell hook, sqlite, toml, clock, notifier
 │   │   │   ├── engine.rs              # Orquestación sesión → presencia → persistencia
 │   │   │   └── ipc_server.rs          # Servidor UDS
 │   │   └── tests/
@@ -90,7 +90,7 @@ Hexagonal: el dominio NO depende del OS (D2).
 | Puerto | Responsabilidad | Adaptador (daemon) |
 |--------|-----------------|--------------------|
 | `Clock` | Monotónico + wall-clock; detección de salto | `SystemClock` |
-| `PresenceSource` | Idle / active / locked / unlocked / suspended / resumed | `HypridleHookSource` + `ClockGapSource` |
+| `PresenceSource` | Idle / active / screen-off / suspended / resumed | `QuickshellHookSource` + `ClockGapSource` |
 | `Store` | Persistencia (actividades, entradas, sesiones, notas) | `SqliteStore` |
 | `ConfigSource` | Carga/validación de configuración | `TomlConfig` |
 | `Notifier` | Avisos del daemon (escalada, fin de bloque) | `NotifySender` |
@@ -143,9 +143,9 @@ Sin tablas de agregados ni tiers de retención: las métricas se calculan con `G
 
 ---
 
-## Presencia (idle, lock, power)
+## Presencia (idle, pantalla apagada, power)
 
-Fuente primaria: **hooks de `hypridle`** (`on-timeout`, `on-resume`, `on_lock_cmd`, `on_unlock_cmd`), que ejecutan `tpt-cli presence --state <s>` contra el socket del daemon.
+Fuente primaria: **hooks de `caelestia-shell`** (quickshell). El shell crea un `IdleMonitor` (`ext-idle-notify-v1`) por cada entrada de `general.idle.timeouts` en `~/.config/caelestia/shell.json`; agregamos entradas propias que ejecutan `tpt-cli presence --state <s>` contra el socket del daemon. El **bloqueo de pantalla se ignora**; la señal severa es la **pantalla apagada** (`dpms off`).
 Backstop: **salto de reloj** (monotónico vs wall-clock) para suspensión/apagado.
 
 Consecuencia: **cero dependencias nuevas**, nada de D-Bus ni libwayland. Argumentación completa → `ADR-008-presence-and-penalties.md`.
@@ -229,4 +229,4 @@ Resumen — el detalle vive en `docs/adr/`.
 | Crate `tpt-cli` | `ADR-005-tpt-cli-crate.md` |
 | Branching y protección de ramas | `ADR-006-branching-and-protection.md` |
 | Pivote a *timer-first* | `ADR-007-timer-first-pivot.md` |
-| Presencia: idle, lock y power | `ADR-008-presence-and-penalties.md` |
+| Presencia: idle, pantalla apagada y power | `ADR-008-presence-and-penalties.md` |

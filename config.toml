@@ -56,6 +56,11 @@ long_break_minutes = 20
 cycles_before_long = 1
 
 [presence]
+# Fuente: hooks del `caelestia-shell` (quickshell) + salto de reloj (ADR-008).
+# El shell reporta con `tpt-cli presence --state idle|active|screen-off`.
+# El BLOQUEO DE PANTALLA SE IGNORA: a los 5 min es una pausa, no una ausencia.
+# La señal severa es la PANTALLA APAGADA (`dpms off`).
+#
 # Nivel vigente: Off | L0 | L1 | L2
 #   Off → sin presencia; acredita todo (cronómetro puro)
 #   L0  → mide y descuenta el gap; SIN abortos ni deuda (default amable)
@@ -74,15 +79,18 @@ strong_warn_after_seconds = 300   # aviso fuerte (5 min)
 
 # ---- Anti-gaming ----
 # Si no hay heartbeat fresco de presencia, no se puede arrancar en L1/L2.
+# Sin el shell reportando, el contrato no tiene juez.
 require_heartbeat = true
 heartbeat_max_age_seconds = 60
 
 # ---- Contadores ----
 abort_counter_window = "contract" # contract | day | session
 # L1 y L2 (PRESETS — solo lectura, no editar acá):
-#   L1 · gap 7min · aborta 35% · deuda 5min(+1/aborto, tope 20) · challenge +8%(+2%/aborto, tope 40%)
-#        · caducidad 15 días · puntaje 1-7 obligatorio · 1 perdón
-#   L2 · gap 7min · aborta 25% · lock aborta · crédito 0 si lock o gap único >=30%
+#   L1 · gap 7min · aborta 35% · pantalla apagada ACUMULA · deuda 5min(+1/aborto, tope 20)
+#        · challenge +8%(+2%/aborto, tope 40%) · caducidad 15 días
+#        · puntaje 1-7 obligatorio · 1 perdón
+#   L2 · gap 7min · aborta 25% · pantalla apagada ABORTA inmediato
+#        · crédito 0 si pantalla apagada o gap único >=30%
 #        · deuda 8min(+1/aborto, tope 25) · challenge +15%(+2%/aborto, tope 40%)
 #        · caducidad 7 días · puntaje 1-5 obligatorio · notas obligatorias · 0 perdones
 

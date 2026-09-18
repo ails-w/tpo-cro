@@ -31,7 +31,7 @@ No espía qué apps usás. No categoriza ventanas. No bloquea programas. El comp
 |----|----------|
 | D1 | 4º crate `tpt-cli` (control + report + import + daemon lifecycle) |
 | D2 | Hexagonal: puertos (traits) en `tpt-core`, adaptadores en `tpt-daemon` |
-| D3 | **Presencia** (idle/lock/suspend) vía hooks de `hypridle` + detección de salto de reloj; sin D-Bus ni libwayland |
+| D3 | **Presencia** (idle, pantalla apagada, suspensión) vía hooks de `caelestia-shell` + salto de reloj; sin D-Bus ni libwayland. El **bloqueo de pantalla se ignora** |
 | D4 | IPC versionado (`protocol_version`) + socket `0600` |
 | D5 | Reloj monotónico + wall-clock; el salto de suspensión **no acredita** tiempo |
 | D6 | Tres modos: **Flowtime**, **Pomodoro**, **Focus** (contrato duro) |
@@ -79,8 +79,8 @@ Detalle → `ADR-004-clock-modes-and-penalties.md`.
 
 ### 3.4 Presencia, Inactividad y Penalizaciones
 
-- Señales de presencia: **teclado idle**, **bloqueo de pantalla**, **suspensión/apagado**.
-- Fuente primaria: **hooks de `hypridle`**; backstop: **salto de reloj** (D3/D5).
+- Señales de presencia: **teclado idle**, **pantalla apagada**, **suspensión/apagado**. El **bloqueo de pantalla se ignora** (a los 5 min es una pausa, no una ausencia).
+- Fuente primaria: **hooks de `caelestia-shell`** (quickshell); backstop: **salto de reloj** (D3/D5).
 - Avisos **inmediatos** a los 3 y 5 min. A los **7 min** el gap existe y deja de acreditarse.
 - **Niveles:** `L0` es medición configurable sin castigo; `L1` y `L2` son **presets fijos** que el usuario ve pero no edita.
 - **El aborto se paga trabajando, no esperando:** la deuda de reparación se salda con foco, o **se refina** aceptando más compromiso en la próxima sesión.
