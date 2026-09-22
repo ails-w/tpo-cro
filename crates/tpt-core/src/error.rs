@@ -1,5 +1,17 @@
 //! Crate error types.
 
+use crate::domain::TimeEntrySource;
+
+/// Errors produced by domain invariants.
+#[derive(Debug, thiserror::Error)]
+pub enum DomainError {
+    #[error("a {source:?} time entry cannot carry negative seconds ({seconds})")]
+    NegativeSeconds {
+        source: TimeEntrySource,
+        seconds: i64,
+    },
+}
+
 /// Errors produced while loading or validating the application configuration.
 #[derive(Debug, thiserror::Error)]
 pub enum ConfigError {
