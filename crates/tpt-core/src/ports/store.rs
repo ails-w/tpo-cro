@@ -3,7 +3,8 @@
 use crate::domain::{Activity, CommitmentContract, Debt, Session, SessionGap, TimeEntry};
 use crate::error::StoreError;
 
-/// Persistence boundary for every domain record.
+/// Persistence boundary for activities, time entries, sessions, gaps, debts and
+/// the commitment contract. Projects and tags join in Phase 3.
 pub trait Store {
     fn save_activity(&mut self, activity: &Activity) -> Result<i64, StoreError>;
     fn load_activity(&self, id: i64) -> Result<Option<Activity>, StoreError>;
