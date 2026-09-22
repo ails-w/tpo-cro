@@ -4,23 +4,27 @@
 > Historial por fase → `docs/progress-log/`. Conceptos → `docs/learning/`.
 > Aprendizajes y decisiones persistentes → Engram (memoria).
 
-**Última actualización**: 2026-09-17
+**Última actualización**: 2026-09-21
 
 ---
 
 ## ⏭️ CONTINUAR ACÁ
 
-**Fase 1 — Features 1.1 a 1.5** (el pivote documental, Feature 1.0, ya está cerrado).
+**Fase 1 cerrada en `dev`** (features 1.1–1.5, 6 commits). Falta abrir la PR `dev → main` (ver MÓDULO: Git).
 
-### Orden de trabajo
+**Siguiente: Fase 2 — Store SQLite.**
+
+### Orden de trabajo (Fase 2)
 
 | # | Feature | Test RED (nombre exacto) | Archivo destino |
 |---|---------|--------------------------|-----------------|
-| 1.1 | Configuración TOML | `app_config_parse_valid_toml_returns_expected` | `crates/tpt-core/src/config/` |
-| 1.2 | Validación de presets | `timer_preset_short_break_over_15_rejected` | `crates/tpt-core/src/config/` |
-| 1.3 | Actividades y agenda | `activity_without_schedule_is_valid` · `activity_requires_tracking_mode` | `crates/tpt-core/src/domain/` |
-| 1.4 | Sesiones y entradas | `session_starts_running_with_activity` · `manual_time_entry_adds_to_activity_total` | `crates/tpt-core/src/domain/` |
-| 1.5 | Puertos | `ports_are_object_safe` | `crates/tpt-core/src/ports/` |
+| 2.1 | Esquema e inicialización | `store_creates_schema_and_indexes` | `crates/tpt-daemon/src/adapters/` |
+| 2.2 | Hilo escritor MPSC | `store_writer_persists_session_without_blocking` | `crates/tpt-daemon/src/adapters/` |
+| 2.3 | Retención de notas | `retention_purges_notes_keeps_sessions` | `crates/tpt-daemon/src/adapters/` |
+| 2.4 | Deuda por cálculo | `debt_amount_is_computed_from_created_at` | `crates/tpt-daemon/src/adapters/` |
+| 2.5 | Penalización negativa | `penalty_entry_accepts_negative_seconds` | `crates/tpt-daemon/src/adapters/` |
+
+Antes de codear: crear `docs/learning/phase-02-store.md` y `docs/progress-log/phase-02-store.md`.
 
 ### Reglas que no se negocian
 
@@ -31,15 +35,16 @@
 
 ### Especificación de referencia (leer antes de codear)
 
-- `docs/adr/ADR-004-clock-modes-and-penalties.md` → contrato, niveles, deuda, refinanciación.
-- `docs/adr/ADR-002-sqlite-schema.md` → campos que los modelos deben poder representar.
-- `docs/adr/ADR-003-hexagonal-ports.md` → los 6 puertos.
-- `docs/phases.md` (Fase 1) → scope, criterios de salida y features.
-- `docs/learning/phase-01-domain.md` → los 3 conceptos de la fase.
+- `docs/adr/ADR-002-sqlite-schema.md` → esquema completo, `CHECK`s, índices y reglas de datos.
+- `docs/adr/ADR-001-architecture-ipc-persistence.md` + `docs/architecture.md` (Persistencia y BTRFS) → `chattr +C`, WAL, checkpoint, `auto_vacuum`.
+- `docs/adr/ADR-003-hexagonal-ports.md` → `Store` es el puerto a implementar (`SqliteStore`); los fakes viven en `tpt-core::testing`.
+- `docs/adr/ADR-004-clock-modes-and-penalties.md` §6 → qué se calcula (crecimiento y vencimiento de deuda) en vez de persistirse.
+- `docs/phases.md` (Fase 2) → scope, criterios de salida y features.
+- `docs/learning/phase-01-domain.md` → decisiones que el adaptador debe respetar (timestamps `i64`, enums `SCREAMING_SNAKE_CASE`).
 
 ### Cierre de fase
 
-Al terminar 1.1–1.5: actualizar `docs/learning/phase-01-domain.md`, `docs/progress-log/phase-01-domain.md`, `docs/handoff.md`, `docs/phases.md` y abrir PR `dev → main`.
+Al terminar 2.1–2.5: actualizar `docs/learning/phase-02-store.md`, `docs/progress-log/phase-02-store.md`, `docs/handoff.md`, `docs/phases.md` y abrir PR `dev → main`.
 
 ---
 
@@ -47,9 +52,9 @@ Al terminar 1.1–1.5: actualizar `docs/learning/phase-01-domain.md`, `docs/prog
 
 | | |
 |---|---|
-| **Fase activa** | Fase 1 — Pivote documental + dominio, config y puertos |
-| **Última completada** | Fase 0 — Setup (workspace Rust + CI) |
-| **Progreso** | Feature 1.0 ✅ (pivote, contrato y presencia cerrados). Features 1.1–1.5 pendientes. |
+| **Fase activa** | Fase 2 — Store SQLite |
+| **Última completada** | Fase 1 — Dominio, config y puertos (código en `dev`; PR a `main` pendiente) |
+| **Progreso** | Fase 1 ✅: features 1.0–1.5 cerradas, 16 tests en `tpt-core`, fmt/clippy/test verdes. Fase 2 sin comenzar. |
 
 ## MÓDULO: Pivote de alcance (2026-09)
 
@@ -92,7 +97,9 @@ La app dejó de ser un **monitor pasivo de ventanas** y pasó a ser un **gestor 
 - ⚠️ **El compromiso es autoimpuesto**: sin tracking de apps, el escape real (navegador, celular) no está cubierto. Decisión consciente (`ADR-007`), no un pendiente.
 - ⚠️ **BTRFS + SQLite**: sin `chattr +C` en el directorio de la DB hay write amplification por CoW. Aplicar **antes** de crear la DB.
 - ⚠️ **Bajo consumo de memoria**: no agregar tokio ni dependencias pesadas. Por eso se descartó D-Bus (`ADR-008`).
-- ℹ️ **Scope `workflow` de GitHub**: el token OAuth de `gh` no puede pushear **ni mergear** PRs que toquen `.github/workflows/`. Usar SSH, o un PAT con permiso Workflows (`ADR-006`). **La PR #2 está bloqueada por esto.**
+- ℹ️ **Scope `workflow` de GitHub**: el token OAuth de `gh` no puede pushear **ni mergear** PRs que toquen `.github/workflows/`. Usar SSH, o un PAT con permiso Workflows (`ADR-006`). La PR #2 ya se cerró; el gotcha sigue vigente para cualquier PR que toque el CI.
+- ℹ️ **`thiserror` y el campo `source`**: cualquier campo con ese nombre se trata como la causa del error. Por eso `TimeEntrySource` implementa `Error`. Si aparece otro error de dominio con un campo `source`, renombrarlo antes de pelear con la macro.
+- ℹ️ **`include_str!("../../../../config.toml")`** cruza el package root de `tpt-core`: `cargo package` deja el TOML afuera y el `.crate` no compila sus tests. Resolver en Fase 10 (packaging).
 
 ## MÓDULO: Entorno de desarrollo
 
@@ -106,6 +113,7 @@ La app dejó de ser un **monitor pasivo de ventanas** y pasó a ser un **gestor 
 ## MÓDULO: Git
 
 - Remoto: `origin` → `github.com:ails-w/tpo-cro` (HTTPS; la llave SSH está registrada pero tiene passphrase).
-- Flujo: `feat/* → dev → main` (`ADR-006`).
-- **PR #2 abierta** (`dev → main`): CI verde y mergeable, **bloqueada por el scope `workflow`**.
+- Flujo: `feat/* → dev → main` (`ADR-006`). **Fase 1 se trabajó directo sobre `dev`** a pedido del usuario.
+- **Sin PRs abiertas.** `main` y `dev` venían del mismo commit (`2f56409`); la Fase 1 agregó 6 commits a `dev`.
+- **Pendiente inmediato**: abrir PR `dev → main` con el cierre de Fase 1.
 - Ramas: `dev` (trabajo), `main` (estable).
