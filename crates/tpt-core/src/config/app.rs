@@ -29,6 +29,33 @@ impl AppConfig {
 
     /// Validates business rules. Returns the first violation found.
     pub fn validate(&self) -> Result<(), ConfigError> {
+        if self.timer_presets.is_empty() {
+            return Err(ConfigError::NoPresets);
+        }
+
+        if !self
+            .timer_presets
+            .iter()
+            .any(|preset| preset.name == self.timers.default_preset)
+        {
+            return Err(ConfigError::UnknownDefaultPreset(
+                self.timers.default_preset.clone(),
+            ));
+        }
+
+        for preset in &self.timer_presets {
+            preset.validate(
+                self.timers.max_short_break_minutes,
+                self.timers.max_long_break_minutes,
+            )?;
+        }
+
+        if !(self.presence.warn_after_seconds < self.presence.strong_warn_after_seconds
+            && self.presence.strong_warn_after_seconds < self.presence.min_gap_seconds)
+        {
+            return Err(ConfigError::PresenceThresholdOrder);
+        }
+
         Ok(())
     }
 }
@@ -182,9 +209,21 @@ impl Default for NotificationsConfig {
 #[cfg(test)]
 mod tests {
     use super::{AbortCounterWindow, AppConfig, GapDeduction};
+    use crate::config::TimerPreset;
     use crate::domain::StrictnessLevel;
+    use crate::error::ConfigError;
 
     const SHIPPED_CONFIG: &str = include_str!("../../../../config.toml");
+
+    fn valid_preset(name: &str) -> TimerPreset {
+        TimerPreset {
+            name: name.to_string(),
+            work_minutes: 25,
+            short_break_minutes: 5,
+            long_break_minutes: 20,
+            cycles_before_long: 4,
+        }
+    }
 
     #[test]
     fn app_config_parse_valid_toml_returns_expected() {
@@ -220,5 +259,76 @@ mod tests {
         assert_eq!(config.timers.max_short_break_minutes, 15);
         assert_eq!(config.general.notes_retention_days, 365);
         assert!(config.timer_presets.is_empty());
+    }
+
+    #[test]
+    fn app_config_validate_rejects_no_presets() {
+        let config = AppConfig::default();
+
+        let error = config
+            .validate()
+            .expect_err("a configuration without timer presets must be rejected");
+
+        assert!(matches!(error, ConfigError::NoPresets));
+    }
+
+    #[test]
+    fn app_config_validate_rejects_unknown_default_preset() {
+        let config = AppConfig {
+            timer_presets: vec![valid_preset("other-preset")],
+            ..AppConfig::default()
+        };
+
+        let error = config
+            .validate()
+            .expect_err("a default preset missing from timer_presets must be rejected");
+
+        assert!(matches!(
+            error,
+            ConfigError::UnknownDefaultPreset(name) if name == "preset-25-5"
+        ));
+    }
+
+    #[test]
+    fn app_config_validate_rejects_preset_over_break_limit() {
+        let config = AppConfig {
+            timer_presets: vec![TimerPreset {
+                short_break_minutes: 16,
+                ..valid_preset("preset-25-5")
+            }],
+            ..AppConfig::default()
+        };
+
+        let error = config
+            .validate()
+            .expect_err("a preset exceeding the short break limit must be rejected");
+
+        assert!(matches!(
+            error,
+            ConfigError::ShortBreakTooLong {
+                value: 16,
+                max: 15,
+                ..
+            }
+        ));
+    }
+
+    #[test]
+    fn app_config_validate_rejects_presence_thresholds_out_of_order() {
+        let config = AppConfig {
+            timer_presets: vec![valid_preset("preset-25-5")],
+            presence: super::PresenceConfig {
+                warn_after_seconds: 300,
+                strong_warn_after_seconds: 180,
+                ..super::PresenceConfig::default()
+            },
+            ..AppConfig::default()
+        };
+
+        let error = config
+            .validate()
+            .expect_err("warn thresholds must be strictly increasing");
+
+        assert!(matches!(error, ConfigError::PresenceThresholdOrder));
     }
 }
