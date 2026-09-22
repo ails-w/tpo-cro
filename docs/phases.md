@@ -29,7 +29,7 @@ Toda fase se documenta con las mismas secciones, sin excepción:
 | # | Feature (fase) | Estado | Conceptos | Log |
 |---|----------------|--------|-----------|-----|
 | 0 | Setup: workspace + CI | ✅ | `learning/phase-00-setup.md` | `progress-log/phase-00-setup.md` |
-| 1 | Pivote documental + dominio, config y puertos | ⏳ | `learning/phase-01-domain.md` | `progress-log/phase-01-domain.md` |
+| 1 | Pivote documental + dominio, config y puertos | ✅ | `learning/phase-01-domain.md` | `progress-log/phase-01-domain.md` |
 | 2 | Store SQLite | ⏳ | `learning/phase-02-store.md` | `progress-log/phase-02-store.md` |
 | 3 | Actividades, proyectos, tags, agenda y cola | ⏳ | `learning/phase-03-activities.md` | `progress-log/phase-03-activities.md` |
 | 4 | Motor de sesiones y contrato | ⏳ | `learning/phase-04-sessions.md` | `progress-log/phase-04-sessions.md` |
@@ -78,7 +78,7 @@ Toda fase se documenta con las mismas secciones, sin excepción:
 
 ---
 
-## Fase 1 — Pivote documental + dominio, config y puertos ⏳
+## Fase 1 — Pivote documental + dominio, config y puertos ✅
 
 **Objetivo:** alinear toda la documentación con el pivote *timer-first* (`ADR-007`) y dejar en `tpt-core` los modelos, la validación de config y los puertos.
 
@@ -96,28 +96,28 @@ Toda fase se documenta con las mismas secciones, sin excepción:
 
 ### Conceptos de aprendizaje
 
-- [ ] Hexagonal: puertos vs adaptadores en un dominio sin SO → `docs/learning/phase-01-domain.md`
-- [ ] TOML + serde round-trip y defaults → `docs/learning/phase-01-domain.md`
-- [ ] Contrato aditivo como invariante de dominio → `docs/learning/phase-01-domain.md`
+- [x] Hexagonal: puertos vs adaptadores en un dominio sin SO → `docs/learning/phase-01-domain.md`
+- [x] TOML + serde round-trip y defaults → `docs/learning/phase-01-domain.md`
+- [x] Contrato aditivo como invariante de dominio → `docs/learning/phase-01-domain.md`
 
 ### Criterio de salida
 
-- [ ] `config.toml` parsea con defaults; config inválida falla con error tipado.
-- [ ] Presets validados: corto ≤15, largo ≤20.
-- [ ] Modelos del dominio compilan y sus tests pasan.
-- [ ] Los 6 puertos definidos, object-safe y con fake.
-- [ ] fmt + clippy limpios.
+- [x] `config.toml` parsea con defaults; config inválida falla con error tipado.
+- [x] Presets validados: corto ≤15, largo ≤20.
+- [x] Modelos del dominio compilan y sus tests pasan.
+- [x] Los 6 puertos definidos, object-safe y con fake.
+- [x] fmt + clippy limpios.
 
 ### Features (TDD)
 
 - [x] Feature 1.0 — Pivote documental (docs + ADRs)
-- [ ] `app_config_parse_valid_toml_returns_expected` (RED → GREEN)
-- [ ] `timer_preset_short_break_over_15_rejected` (RED → GREEN)
-- [ ] `activity_without_schedule_is_valid` (RED → GREEN)
-- [ ] `activity_requires_tracking_mode` (RED → GREEN)
-- [ ] `session_starts_running_with_activity` (RED → GREEN)
-- [ ] `manual_time_entry_adds_to_activity_total` (RED → GREEN)
-- [ ] `ports_are_object_safe` (RED → GREEN)
+- [x] `app_config_parse_valid_toml_returns_expected` (RED → GREEN)
+- [x] `timer_preset_short_break_over_15_rejected` (RED → GREEN)
+- [x] `activity_without_schedule_is_valid` (RED → GREEN)
+- [x] `activity_requires_tracking_mode` (RED → GREEN)
+- [x] `session_starts_running_with_activity` (RED → GREEN)
+- [x] `manual_time_entry_adds_to_activity_total` (RED → GREEN)
+- [x] `ports_are_object_safe` (RED → GREEN)
 
 ---
 

@@ -89,11 +89,6 @@ Dos, y los dos son silenciosos:
 - `docs/adr/ADR-008-presence-and-penalties.md` · `docs/architecture.md` (Presencia)
 - `~/.config/caelestia/shell.json` · `/etc/xdg/quickshell/caelestia/modules/IdleMonitors.qml`
 
-
-### Referencias
-
-- `docs/adr/ADR-008-presence-and-penalties.md` · `docs/architecture.md` (Presencia)
-
 ---
 
 ## Puertos vs adaptadores en un dominio sin SO
@@ -135,6 +130,28 @@ Dejar que el dominio importe un tipo del adaptador ("solo para el `PathBuf`" o "
 ## Relación entre estos conceptos
 
 Los tres son la misma idea aplicada en tres niveles: **imponer la regla por diseño, no por disciplina**. El contrato aditivo hace irrepresentable acortar la meta; la presencia sin dependencias evita cargar el daemon con lo que otro proceso ya resuelve; y la frontera de puertos hace que el dominio no pueda acoplarse accidentalmente al SO. En los tres casos, el error deja de ser posible en vez de ser detectado.
+
+---
+
+## Hallazgos de implementación (features 1.1–1.5)
+
+Cosas que aparecieron al codear y que no se ven venir leyendo el diseño.
+
+### `#[serde(default)]` a nivel struct, pero nunca en el campo obligatorio
+
+Un `#[serde(default)]` sobre el struct cubre *todas* las secciones y campos que falten de una sola vez — ideal para que un `config.toml` parcial cargue. El riesgo es simétrico: el mismo atributo sobre `Activity` habría vuelto opcional `tracking_mode`, que es **exactamente** lo que se quiere prohibir. La regla queda: defaults en la configuración, jamás en el invariante.
+
+### El campo `source` cambia de dueño con `thiserror`
+
+`thiserror` interpreta cualquier campo llamado `source` como la causa del error, sin opt-out. Como `DomainError::NegativeSeconds { source: TimeEntrySource, seconds }` necesitaba ese nombre para la API pública, `TimeEntrySource` terminó implementando `Error` — un enum de dominio convertido en error por una convención de la macro. Si vuelve a pasar: renombrar el campo (`entry_source`) es más sano que ensuciar el dominio.
+
+### Object safety se prueba compilando, no razonando
+
+No hace falta auditar método por método si el trait sigue siendo `dyn`-compatible: alcanza con **instanciar** `Box<dyn Trait>` para los seis puertos en un test. Si alguien agrega un método genérico o devuelve `Self`, la suite deja de compilar. El test no prueba comportamiento: prueba que la forma del trait sigue siendo la acordada.
+
+### El fixture más honesto es el artefacto real
+
+`include_str!("../../../../config.toml")` hace que el test parsee el archivo que se shippea, no una copia que puede divergir. Dos contras: cualquier comentario o clave nueva del TOML pasa a ser parte del contrato del test (bien: falla ruidoso), y el path cruza el package root, así que `cargo package` deja el archivo afuera (pendiente de Fase 10).
 
 ---
 

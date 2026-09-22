@@ -5,8 +5,8 @@
 
 ## Estado
 
-**Estado**: En Progreso
-**Última Actualización**: 2026-09-14
+**Estado**: Completada (código y docs; PR `dev → main` pendiente)
+**Última Actualización**: 2026-09-21
 
 ## Objetivos
 
@@ -16,11 +16,11 @@
 ## Progreso
 
 - [x] Feature 1.0 — Pivote documental (2026-09-14)
-- [ ] Feature 1.1 — Configuración TOML
-- [ ] Feature 1.2 — Validación de presets y niveles
-- [ ] Feature 1.3 — Actividades, proyectos y agenda
-- [ ] Feature 1.4 — Sesiones y entradas de tiempo
-- [ ] Feature 1.5 — Puertos
+- [x] Feature 1.1 — Configuración TOML (2026-09-21)
+- [x] Feature 1.2 — Validación de presets y niveles (2026-09-21)
+- [x] Feature 1.3 — Actividades, proyectos y agenda (2026-09-21)
+- [x] Feature 1.4 — Sesiones y entradas de tiempo (2026-09-21)
+- [x] Feature 1.5 — Puertos (2026-09-21)
 
 ## Tareas Completadas
 
@@ -32,6 +32,18 @@
 - **Documentos eliminados**: ADRs de blocklist, retención/BTRFS y capas de tracking; `docs/development-plan.md` (fusionado); `docs/diagrams/`, `docs/learning/` y `docs/progress-log/` READMEs (duplicaban índices).
 - **Tests**: N/A (fase de documentación).
 
+### 2026-09-21 — Features 1.1 a 1.5: dominio, config y puertos
+
+- **Descripción**: Implementación completa de `tpt-core` en TDD estricto (RED → GREEN → REFACTOR), un commit por feature, sobre `dev`.
+- **Feature 1.1 — Configuración TOML** (`da47082`): `AppConfig` con secciones `general`/`timers`/`presence`/`commitment`/`notifications` y `[[timer_presets]]`; `from_toml_str` con defaults por sección; `ConfigError` tipado con `thiserror`. Tests: `app_config_parse_valid_toml_returns_expected` (parsing del `config.toml` real vía `include_str!`), `app_config_parse_minimal_toml_applies_defaults`.
+- **Feature 1.2 — Validación de presets** (`f2f5e6e`): `TimerPreset::validate` contra `max_short_break_minutes`/`max_long_break_minutes` del propio config; `AppConfig::validate` cubre presets vacíos, default desconocido, breaks fuera de límite y orden de umbrales de presencia. Tests: `timer_preset_short_break_over_15_rejected` (+ long break y caso límite).
+- **Feature 1.3 — Actividades y agenda** (`359141e`): `Activity` con `tracking_mode` obligatorio por tipo y `schedule_rule: Option<ScheduleRule>`; `Project`, `Tag`, `ScheduleRule` (4 formas). Tests: `activity_without_schedule_is_valid`, `activity_requires_tracking_mode` (rechazo por deserialización, no por validación).
+- **Feature 1.4 — Sesiones y entradas** (`c3a391d`): `Session::new` siempre `RUNNING` y sin actividad no existe; `TimeEntry` con `seconds` negativo sólo para `PENALTY`; `activity_total_seconds` como cálculo puro; `Debt`, `CommitmentContract`, `Reflection`, `SessionGap`. Tests: `session_starts_running_with_activity`, `manual_time_entry_adds_to_activity_total`.
+- **Feature 1.5 — Puertos** (`8ed1a3b`): los 6 traits (`Clock`, `PresenceSource`, `Store`, `ConfigSource`, `Notifier`, `IpcTransport`) con fakes en `testing/` detrás de `#[cfg(any(test, feature = "testing"))]`. Test: `ports_are_object_safe` (`Box<dyn _>` compila para los seis).
+- **Corrección post-verificación** (`452fe11`): se agregó `app_config_parse_reads_values_from_document` (el test original sólo distinguía defaults), se fijó el mensaje de error en `activity_requires_tracking_mode`, se renombró `advance_monotonic_only` → `advance_wall_only` y se corrigieron tres docs sobre-afirmadas.
+- **Puerta**: `cargo fmt --all --check` OK · `cargo clippy --workspace --all-targets --locked -- -D warnings` sin warnings · `cargo test --workspace --all-targets --locked` 16/16 en `tpt-core` (+1 humo por crate restante).
+- **Verificación independiente** (contexto fresco, read-only): 12/12 requisitos confirmados, sin hallazgos BLOCKER/MAJOR; los MINOR/INFO quedaron como pendientes.
+
 ## Decisiones
 
 1. **Sin tracking de apps** — el compromiso pasa a ser autoimpuesto y el timer se vuelve el centro. Registrado en `ADR-007`.
@@ -40,15 +52,22 @@
 4. **SQLite sin tiers** — sin flood de eventos, las métricas se calculan on-the-fly (`ADR-002`).
 5. **Contrato de compromiso en la DB con checksum**, no en `config.toml`, que es editable a mano (`ADR-004`).
 6. **Renumeración de ADRs** en vez de acumular ADRs superados, por ser un proyecto pre-código en reestructuración.
+7. **Timestamps `i64` epoch UTC en el dominio, sin crate de fechas**: el adaptador convierte a/desde `TEXT` (ADR-002). Evita sumar `chrono`/`time` al crate más caliente en tests.
+8. **Los enums de dominio serializan en `SCREAMING_SNAKE_CASE`** para que su forma textual coincida exactamente con los `CHECK` de `ADR-002` (`TIMER`, `RUNNING`, `ABORTED_PENALIZED`, …). Los enums de `config.toml` usan `lowercase`.
+9. **Fakes de los puertos dentro de `tpt-core`** (`testing/`, gateados por la feature `testing`) para que el daemon los reutilice sin duplicar dobles.
 
 ## Problemas
 
 1. **`dev` quedó vacía de Fase 0** — se creó desde `main` y los commits de Fase 0 viven en la rama remota `chore/phase-0-setup`. Pendiente llevarlos a `dev`.
 2. **ADRs del diseño viejo dispersos** — se resolvió renumerando, en lugar de cargar el repo con ADRs "Reemplazado por…" para decisiones que nunca llegaron a implementarse.
+3. **`thiserror` secuestra el campo `source`** — cualquier campo con ese nombre se trata como la causa del error, así que `TimeEntrySource` tuvo que implementar `Error` (ver `docs/learning/phase-01-domain.md`). Alternativa no tomada: renombrar el campo a `entry_source`.
 
 ## Pendientes
 
-- Features 1.1 a 1.5 (dominio, config y puertos).
+- **PR `dev → main`** de cierre de la fase.
+- **Los fakes no tienen tests de comportamiento propios**: hoy sólo se ejercitan desde `ports_are_object_safe`. Agregar tests cuando el motor los use (Fases 4–5).
+- **`include_str!("../../../../config.toml")`** cruza el package root: `cargo package` produce un `.crate` sin `config.toml` y el test no compilaría. Relevante para el packaging de Fase 10.
+- **Formato de wire de `Weekday`, `RatingScale` y `ScheduleRule`** difiere del de la DB (`"mon"`, `"Five"`, externally tagged). No es un problema hoy (la DB mapea explícito), pero hay que fijarlo antes del IPC → Fase 6.
 - Fórmula de **Focus Quality** y umbral de "día trabajado" → Fase 8.
 
 ### 2026-09-17 — Revisión de presencia: quickshell reemplaza a hypridle
