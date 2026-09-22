@@ -70,11 +70,12 @@ mod tests {
             "created_at": 1700000000
         }"#;
 
-        let result = serde_json::from_str::<Activity>(json);
+        let error = serde_json::from_str::<Activity>(json)
+            .expect_err("deserializing an activity without tracking_mode must fail");
 
         assert!(
-            result.is_err(),
-            "deserializing an activity without tracking_mode must fail"
+            error.to_string().contains("tracking_mode"),
+            "the error must point at the missing tracking_mode, got: {error}"
         );
     }
 }

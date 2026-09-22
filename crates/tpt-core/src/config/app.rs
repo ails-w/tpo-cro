@@ -9,7 +9,8 @@ use crate::error::ConfigError;
 /// Root of the TOML configuration document.
 ///
 /// Every section and field falls back to its default when absent, so a partial
-/// (or even empty) document still yields a usable configuration.
+/// (or even empty) document always parses. A document with no `[[timer_presets]]`
+/// still parses but does not pass [`AppConfig::validate`]: presets are required.
 #[derive(Debug, Clone, Default, PartialEq, Serialize, Deserialize)]
 #[serde(default)]
 pub struct AppConfig {
@@ -208,7 +209,7 @@ impl Default for NotificationsConfig {
 
 #[cfg(test)]
 mod tests {
-    use super::{AbortCounterWindow, AppConfig, GapDeduction};
+    use super::{AbortCounterWindow, AppConfig, FocusView, GapDeduction};
     use crate::config::TimerPreset;
     use crate::domain::StrictnessLevel;
     use crate::error::ConfigError;
@@ -259,6 +260,70 @@ mod tests {
         assert_eq!(config.timers.max_short_break_minutes, 15);
         assert_eq!(config.general.notes_retention_days, 365);
         assert!(config.timer_presets.is_empty());
+    }
+
+    #[test]
+    fn app_config_parse_reads_values_from_document() {
+        let document = r#"
+            [general]
+            notes_retention_days = 30
+
+            [timers]
+            default_preset = "custom"
+            pomodoro_cycles = 6
+            awaiting_expiry_minutes = 15
+            focus_view = "locked"
+
+            [presence]
+            level = "L1"
+            min_gap_seconds = 600
+            strong_warn_after_seconds = 400
+            warn_after_seconds = 200
+            gap_deduction = "excess"
+            abort_counter_window = "day"
+            require_heartbeat = false
+
+            [commitment]
+            min_term_days = 7
+
+            [notifications]
+            desktop = false
+            sound_file = "/tmp/bell.ogg"
+
+            [[timer_presets]]
+            name = "custom"
+            work_minutes = 35
+            short_break_minutes = 7
+            long_break_minutes = 18
+            cycles_before_long = 3
+        "#;
+
+        let config = AppConfig::from_toml_str(document).expect("custom document must parse");
+
+        assert_eq!(config.general.notes_retention_days, 30);
+        assert_eq!(config.timers.default_preset, "custom");
+        assert_eq!(config.timers.pomodoro_cycles, 6);
+        assert_eq!(config.timers.awaiting_expiry_minutes, 15);
+        assert_eq!(config.timers.focus_view, FocusView::Locked);
+        assert_eq!(config.presence.level, StrictnessLevel::L1);
+        assert_eq!(config.presence.min_gap_seconds, 600);
+        assert_eq!(config.presence.strong_warn_after_seconds, 400);
+        assert_eq!(config.presence.warn_after_seconds, 200);
+        assert_eq!(config.presence.gap_deduction, GapDeduction::Excess);
+        assert_eq!(
+            config.presence.abort_counter_window,
+            AbortCounterWindow::Day
+        );
+        assert!(!config.presence.require_heartbeat);
+        assert_eq!(config.commitment.min_term_days, 7);
+        assert!(!config.notifications.desktop);
+        assert_eq!(config.notifications.sound_file, "/tmp/bell.ogg");
+        assert_eq!(config.timer_presets.len(), 1);
+        assert_eq!(config.timer_presets[0].work_minutes, 35);
+        assert_eq!(config.timer_presets[0].cycles_before_long, 3);
+        config
+            .validate()
+            .expect("a document with non-default values can still be valid");
     }
 
     #[test]

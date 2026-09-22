@@ -38,7 +38,7 @@ impl FakeClock {
 
     /// Simulates a suspend: the wall clock moves forward while the monotonic
     /// clock stays frozen, which is exactly the gap ADR-008 detects.
-    pub fn advance_monotonic_only(&self, seconds: i64) {
+    pub fn advance_wall_only(&self, seconds: i64) {
         self.wall.set(self.wall.get() + seconds);
     }
 }
