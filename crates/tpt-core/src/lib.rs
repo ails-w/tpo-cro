@@ -2,6 +2,10 @@
 
 #![cfg_attr(test, allow(clippy::unwrap_used, clippy::expect_used, clippy::panic))]
 
+pub mod config;
+pub mod domain;
+pub mod error;
+
 /// Returns the version of the `tpt-core` crate.
 #[must_use]
 pub fn version() -> &'static str {
