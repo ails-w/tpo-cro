@@ -38,3 +38,22 @@ pub enum ConfigError {
     )]
     PresenceThresholdOrder,
 }
+
+/// Errors produced by the storage port.
+#[derive(Debug, thiserror::Error)]
+pub enum StoreError {
+    #[error("storage backend unavailable: {message}")]
+    Backend { message: String },
+    #[error("record not found: {kind} #{id}")]
+    NotFound { kind: &'static str, id: i64 },
+}
+
+/// Errors produced by the notifier port.
+#[derive(Debug, thiserror::Error)]
+#[error("notification failed: {0}")]
+pub struct NotifyError(pub String);
+
+/// Errors produced by the IPC transport port.
+#[derive(Debug, thiserror::Error)]
+#[error("ipc transport failed: {0}")]
+pub struct IpcError(pub String);

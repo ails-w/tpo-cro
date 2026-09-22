@@ -5,6 +5,10 @@
 pub mod config;
 pub mod domain;
 pub mod error;
+pub mod ports;
+
+#[cfg(any(test, feature = "testing"))]
+pub mod testing;
 
 /// Returns the version of the `tpt-core` crate.
 #[must_use]
