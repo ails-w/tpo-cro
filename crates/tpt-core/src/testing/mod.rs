@@ -243,6 +243,10 @@ impl Store for InMemoryStore {
             .find(|item| item.closed_at.is_none())
             .cloned())
     }
+
+    fn flush(&mut self) -> Result<(), StoreError> {
+        Ok(())
+    }
 }
 
 /// A configuration source that always returns the same snapshot.
