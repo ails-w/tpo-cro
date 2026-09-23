@@ -15,7 +15,7 @@ use rusqlite::Connection;
 use tpt_core::domain::{Activity, CommitmentContract, Debt, Session, SessionGap, TimeEntry};
 use tpt_core::error::StoreError;
 
-use super::{backend, mapping, sql_backend};
+use super::{backend, mapping, retention, sql_backend};
 
 /// Bounded queue capacity: a full queue applies backpressure instead of
 /// growing memory without limit.
@@ -33,6 +33,10 @@ pub(super) enum WriteCommand {
     SaveGap(SessionGap),
     SaveDebt(Debt),
     SaveContract(CommitmentContract),
+    Purge {
+        older_than_days: u32,
+        reply: Sender<Result<usize, StoreError>>,
+    },
     Checkpoint(Sender<Result<(), StoreError>>),
     Flush(Sender<Result<(), StoreError>>),
     Shutdown,
@@ -75,6 +79,12 @@ pub(super) fn run(connection: Connection, receiver: Receiver<WriteCommand>) {
                     &mut first_error,
                     mapping::upsert_contract(&connection, &contract),
                 );
+            }
+            WriteCommand::Purge {
+                older_than_days,
+                reply,
+            } => {
+                let _ = reply.send(retention::purge_expired_notes(&connection, older_than_days));
             }
             WriteCommand::Checkpoint(reply) => {
                 let _ = reply.send(checkpoint(&connection));
