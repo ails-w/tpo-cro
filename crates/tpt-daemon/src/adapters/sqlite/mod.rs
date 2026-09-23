@@ -492,8 +492,8 @@ mod tests {
     }
 
     #[test]
-    #[ignore = "real-disk validation of `chattr +C` on BTRFS; run explicitly with --ignored"]
-    fn real_disk_store_opens_on_compressed_directory() {
+    #[ignore = "opens the store on the real data directory; run explicitly with --ignored"]
+    fn real_data_dir_store_opens() {
         let path = resolve_db_path("~/.local/share/tpt/metrics.db").unwrap();
 
         let store = SqliteStore::open(&path).unwrap();
@@ -1115,16 +1115,44 @@ mod tests {
         store.flush().unwrap();
 
         let connection = store.reader.lock().unwrap();
-        let result = connection.execute(
-            "INSERT INTO time_entries (activity_id, source, seconds, day, created_at) \
-             VALUES (?1, 'MANUAL', -1, '2026-09-20', datetime('now'))",
-            [activity_id],
-        );
+        let error = connection
+            .execute(
+                "INSERT INTO time_entries (activity_id, source, seconds, day, created_at) \
+                 VALUES (?1, 'MANUAL', -1, '2026-09-20', datetime('now'))",
+                [activity_id],
+            )
+            .expect_err("the CHECK must reject a negative non-penalty entry");
 
         assert!(
-            result.is_err(),
-            "the CHECK must reject a negative non-penalty entry"
+            error.to_string().contains("CHECK"),
+            "expected a CHECK constraint failure, got: {error}"
         );
+        let stored: i64 = connection
+            .query_row("SELECT COUNT(*) FROM time_entries", [], |row| row.get(0))
+            .unwrap();
+        assert_eq!(stored, 0, "the rejected row must not be stored");
+    }
+
+    #[test]
+    fn store_rejects_malformed_schedule_rule_json() {
+        let (_dir, mut store) = open_temp_store();
+        let id = store
+            .save_activity(&sample_activity("Bad json", 1_700_000_000))
+            .unwrap();
+        store.flush().unwrap();
+        {
+            let connection = store.reader.lock().unwrap();
+            connection
+                .execute(
+                    "UPDATE activities SET schedule_rule = '{not json' WHERE id = ?1",
+                    [id],
+                )
+                .unwrap();
+        }
+
+        let error = store.load_activity(id).err().unwrap();
+
+        assert!(matches!(error, StoreError::Backend { .. }));
     }
 
     #[test]

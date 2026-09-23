@@ -108,23 +108,27 @@ pub struct InMemoryStore {
 }
 
 impl InMemoryStore {
-    fn allocate_id(&mut self) -> i64 {
-        self.next_id += 1;
-        self.next_id
+    /// Mirrors `SqliteStore`: an explicit id advances the counter past itself,
+    /// so a later `id: None` can never reuse it.
+    fn allocate_id(&mut self, explicit: Option<i64>) -> i64 {
+        match explicit {
+            Some(id) => {
+                self.next_id = self.next_id.max(id);
+                id
+            }
+            None => {
+                self.next_id += 1;
+                self.next_id
+            }
+        }
     }
 }
 
 impl Store for InMemoryStore {
     fn save_activity(&mut self, activity: &Activity) -> Result<i64, StoreError> {
         let mut record = activity.clone();
-        let id = match record.id {
-            Some(id) => id,
-            None => {
-                let id = self.allocate_id();
-                record.id = Some(id);
-                id
-            }
-        };
+        let id = self.allocate_id(record.id);
+        record.id = Some(id);
         upsert(&mut self.activities, record, id, |item| item.id)
     }
 
@@ -147,14 +151,8 @@ impl Store for InMemoryStore {
 
     fn save_time_entry(&mut self, entry: &TimeEntry) -> Result<i64, StoreError> {
         let mut record = entry.clone();
-        let id = match record.id {
-            Some(id) => id,
-            None => {
-                let id = self.allocate_id();
-                record.id = Some(id);
-                id
-            }
-        };
+        let id = self.allocate_id(record.id);
+        record.id = Some(id);
         upsert(&mut self.time_entries, record, id, |item| item.id)
     }
 
@@ -169,14 +167,8 @@ impl Store for InMemoryStore {
 
     fn save_session(&mut self, session: &Session) -> Result<i64, StoreError> {
         let mut record = session.clone();
-        let id = match record.id {
-            Some(id) => id,
-            None => {
-                let id = self.allocate_id();
-                record.id = Some(id);
-                id
-            }
-        };
+        let id = self.allocate_id(record.id);
+        record.id = Some(id);
         upsert(&mut self.sessions, record, id, |item| item.id)
     }
 
@@ -190,27 +182,15 @@ impl Store for InMemoryStore {
 
     fn save_gap(&mut self, gap: &SessionGap) -> Result<i64, StoreError> {
         let mut record = gap.clone();
-        let id = match record.id {
-            Some(id) => id,
-            None => {
-                let id = self.allocate_id();
-                record.id = Some(id);
-                id
-            }
-        };
+        let id = self.allocate_id(record.id);
+        record.id = Some(id);
         upsert(&mut self.gaps, record, id, |item| item.id)
     }
 
     fn save_debt(&mut self, debt: &Debt) -> Result<i64, StoreError> {
         let mut record = debt.clone();
-        let id = match record.id {
-            Some(id) => id,
-            None => {
-                let id = self.allocate_id();
-                record.id = Some(id);
-                id
-            }
-        };
+        let id = self.allocate_id(record.id);
+        record.id = Some(id);
         upsert(&mut self.debts, record, id, |item| item.id)
     }
 
@@ -225,14 +205,8 @@ impl Store for InMemoryStore {
 
     fn save_contract(&mut self, contract: &CommitmentContract) -> Result<i64, StoreError> {
         let mut record = contract.clone();
-        let id = match record.id {
-            Some(id) => id,
-            None => {
-                let id = self.allocate_id();
-                record.id = Some(id);
-                id
-            }
-        };
+        let id = self.allocate_id(record.id);
+        record.id = Some(id);
         upsert(&mut self.contracts, record, id, |item| item.id)
     }
 
@@ -240,7 +214,8 @@ impl Store for InMemoryStore {
         Ok(self
             .contracts
             .iter()
-            .find(|item| item.closed_at.is_none())
+            .filter(|item| item.closed_at.is_none())
+            .max_by_key(|item| (item.started_at, item.id))
             .cloned())
     }
 
@@ -322,5 +297,57 @@ impl IpcTransport for FakeTransport {
 
     fn recv(&mut self) -> Result<Option<Vec<u8>>, IpcError> {
         Ok(self.inbound.pop_front())
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::InMemoryStore;
+    use crate::domain::{Activity, CommitmentContract, StrictnessLevel, TrackingMode};
+    use crate::ports::Store;
+
+    fn contract(started_at: i64, checksum: &str) -> CommitmentContract {
+        CommitmentContract {
+            id: None,
+            level: StrictnessLevel::L1,
+            term_seconds: 604_800,
+            started_at,
+            ends_at: started_at + 604_800,
+            params_snapshot: "{}".to_owned(),
+            checksum: checksum.to_owned(),
+            closed_at: None,
+        }
+    }
+
+    #[test]
+    fn in_memory_store_does_not_reuse_ids_after_explicit_id_save() {
+        let mut store = InMemoryStore::default();
+
+        let mut explicit = Activity::new("Explicit", TrackingMode::Manual, 1_700_000_000);
+        explicit.id = Some(1);
+        assert_eq!(store.save_activity(&explicit).unwrap(), 1);
+
+        let assigned = Activity::new("Assigned", TrackingMode::Manual, 1_700_000_001);
+        assert_eq!(store.save_activity(&assigned).unwrap(), 2);
+        assert_eq!(store.list_activities(true).unwrap().len(), 2);
+    }
+
+    #[test]
+    fn in_memory_store_returns_the_latest_active_contract() {
+        let mut store = InMemoryStore::default();
+        store
+            .save_contract(&contract(1_700_000_000, "older"))
+            .unwrap();
+        let newer_id = store
+            .save_contract(&contract(1_700_000_100, "newer"))
+            .unwrap();
+        let mut closed = contract(1_700_000_200, "closed");
+        closed.closed_at = Some(1_700_000_300);
+        store.save_contract(&closed).unwrap();
+
+        let active = store.load_active_contract().unwrap().unwrap();
+
+        assert_eq!(active.id, Some(newer_id));
+        assert_eq!(active.checksum, "newer");
     }
 }
