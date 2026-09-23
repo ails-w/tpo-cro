@@ -6,6 +6,7 @@
 //! Callers must pass a file path (tests use temporary files).
 
 mod mapping;
+mod retention;
 mod schema;
 mod writer;
 
@@ -141,6 +142,15 @@ impl SqliteStore {
     /// Truncates the WAL and reclaims free pages.
     pub fn checkpoint(&self) -> Result<(), StoreError> {
         self.request(WriteCommand::Checkpoint)
+    }
+
+    /// Nulls notes older than `days` through the writer thread, returning how
+    /// many rows were touched. `days == 0` disables retention.
+    pub fn purge_expired_notes(&self, days: u32) -> Result<usize, StoreError> {
+        self.request(|reply| WriteCommand::Purge {
+            older_than_days: days,
+            reply,
+        })
     }
 
     /// Assigns (or validates) the id of a record about to be written.
@@ -986,5 +996,111 @@ mod tests {
         let loaded = store.load_activity(id).unwrap().unwrap();
         assert_eq!(loaded.name, "After");
         assert_eq!(store.list_activities(true).unwrap().len(), 1);
+    }
+
+    #[test]
+    fn retention_purges_notes_keeps_sessions() {
+        let (_dir, mut store) = open_temp_store();
+        let activity_id = store
+            .save_activity(&sample_activity("Retention", 1_700_000_000))
+            .unwrap();
+        store.flush().unwrap();
+
+        let now = std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .unwrap()
+            .as_secs() as i64;
+        let today: String = store
+            .reader
+            .lock()
+            .unwrap()
+            .query_row("SELECT date('now', 'localtime')", [], |row| row.get(0))
+            .unwrap();
+
+        let mut old_entry = sample_time_entry(activity_id);
+        old_entry.day = "2020-01-01".to_owned();
+        old_entry.note = Some("old note".to_owned());
+        old_entry.external_id = None;
+        let old_entry_id = store.save_time_entry(&old_entry).unwrap();
+
+        let mut recent_entry = sample_time_entry(activity_id);
+        recent_entry.day = today;
+        recent_entry.note = Some("recent note".to_owned());
+        recent_entry.external_id = None;
+        let recent_entry_id = store.save_time_entry(&recent_entry).unwrap();
+
+        let mut old_session = Session::new(
+            activity_id,
+            SessionMode::Focus,
+            StrictnessLevel::L1,
+            Some(1500),
+            None,
+            now - 40 * 86_400,
+        );
+        old_session.status = SessionStatus::Completed;
+        old_session.ended_at = Some(now - 40 * 86_400 + 1500);
+        old_session.reflection = Some("old reflection".to_owned());
+        let old_session_id = store.save_session(&old_session).unwrap();
+
+        let mut recent_session = Session::new(
+            activity_id,
+            SessionMode::Focus,
+            StrictnessLevel::L1,
+            Some(1500),
+            None,
+            now,
+        );
+        recent_session.reflection = Some("recent reflection".to_owned());
+        let recent_session_id = store.save_session(&recent_session).unwrap();
+        store.flush().unwrap();
+
+        assert_eq!(store.purge_expired_notes(30).unwrap(), 2);
+
+        let entries = store.list_time_entries(activity_id).unwrap();
+        assert_eq!(entries.len(), 2, "purge must never delete rows");
+        let old_entry = entries
+            .iter()
+            .find(|entry| entry.id == Some(old_entry_id))
+            .unwrap();
+        let recent_entry = entries
+            .iter()
+            .find(|entry| entry.id == Some(recent_entry_id))
+            .unwrap();
+        assert_eq!(old_entry.note, None, "the old note must be purged");
+        assert_eq!(recent_entry.note.as_deref(), Some("recent note"));
+
+        let old_session = store.load_session(old_session_id).unwrap().unwrap();
+        let recent_session = store.load_session(recent_session_id).unwrap().unwrap();
+        assert_eq!(
+            old_session.reflection, None,
+            "the old reflection must be purged"
+        );
+        assert_eq!(
+            recent_session.reflection.as_deref(),
+            Some("recent reflection")
+        );
+    }
+
+    #[test]
+    fn retention_with_zero_days_is_a_no_op() {
+        let (_dir, mut store) = open_temp_store();
+        let activity_id = store
+            .save_activity(&sample_activity("No purge", 1_700_000_000))
+            .unwrap();
+        store.flush().unwrap();
+        let mut entry = sample_time_entry(activity_id);
+        entry.day = "2020-01-01".to_owned();
+        entry.note = Some("kept note".to_owned());
+        let entry_id = store.save_time_entry(&entry).unwrap();
+        store.flush().unwrap();
+
+        assert_eq!(store.purge_expired_notes(0).unwrap(), 0);
+
+        let entries = store.list_time_entries(activity_id).unwrap();
+        let kept = entries
+            .iter()
+            .find(|entry| entry.id == Some(entry_id))
+            .unwrap();
+        assert_eq!(kept.note.as_deref(), Some("kept note"));
     }
 }
