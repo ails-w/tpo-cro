@@ -30,7 +30,7 @@ Toda fase se documenta con las mismas secciones, sin excepción:
 |---|----------------|--------|-----------|-----|
 | 0 | Setup: workspace + CI | ✅ | `learning/phase-00-setup.md` | `progress-log/phase-00-setup.md` |
 | 1 | Pivote documental + dominio, config y puertos | ✅ | `learning/phase-01-domain.md` | `progress-log/phase-01-domain.md` |
-| 2 | Store SQLite | ⏳ | `learning/phase-02-store.md` | `progress-log/phase-02-store.md` |
+| 2 | Store SQLite | ✅ | `learning/phase-02-store.md` | `progress-log/phase-02-store.md` |
 | 3 | Actividades, proyectos, tags, agenda y cola | ⏳ | `learning/phase-03-activities.md` | `progress-log/phase-03-activities.md` |
 | 4 | Motor de sesiones y contrato | ⏳ | `learning/phase-04-sessions.md` | `progress-log/phase-04-sessions.md` |
 | 5 | Presencia, niveles y deuda | ⏳ | `learning/phase-05-presence.md` | `progress-log/phase-05-presence.md` |
@@ -121,7 +121,7 @@ Toda fase se documenta con las mismas secciones, sin excepción:
 
 ---
 
-## Fase 2 — Store SQLite ⏳
+## Fase 2 — Store SQLite ✅
 
 **Objetivo:** implementar el esquema de `ADR-002` con WAL, hilo escritor y retención de notas.
 
@@ -132,7 +132,7 @@ Toda fase se documenta con las mismas secciones, sin excepción:
 - WAL, checkpoint `TRUNCATE`, `auto_vacuum=INCREMENTAL`.
 - Retención de **notas** (`notes_retention_days`); sin tiers de eventos.
 - Estado derivado por cálculo: crecimiento y vencimiento de deuda sin jobs.
-- `chattr +C` documentado y validado en disco real.
+- `chattr +C` documentado y validado en disco real. ✅ (`lsattr` sobre `~/.local/share/tpt` y `metrics.db`)
 
 ### Fuera de scope
 
@@ -140,24 +140,24 @@ Toda fase se documenta con las mismas secciones, sin excepción:
 
 ### Conceptos de aprendizaje
 
-- [ ] `rusqlite` + WAL con escritor dedicado → `docs/learning/phase-02-store.md`
-- [ ] Migraciones y versionado de esquema → `docs/learning/phase-02-store.md`
-- [ ] Derivar estado por cálculo en vez de escribirlo (sin cron) → `docs/learning/phase-02-store.md`
+- [x] `rusqlite` + WAL con escritor dedicado → `docs/learning/phase-02-store.md`
+- [x] Migraciones y versionado de esquema → `docs/learning/phase-02-store.md`
+- [x] Derivar estado por cálculo en vez de escribirlo (sin cron) → `docs/learning/phase-02-store.md`
 
 ### Criterio de salida
 
-- [ ] Store inicializa el esquema completo en una DB temporal.
-- [ ] Las escrituras por MPSC no bloquean al caller.
-- [ ] La retención purga notas antiguas y conserva sesiones y entradas.
-- [ ] Deuda: crecimiento y vencimiento se calculan correctamente desde `created_at`.
+- [x] Store inicializa el esquema completo en una DB temporal.
+- [x] Las escrituras por MPSC no bloquean al caller.
+- [x] La retención purga notas antiguas y conserva sesiones y entradas.
+- [x] Deuda: crecimiento y vencimiento se calculan correctamente desde `created_at`.
 
 ### Features (TDD)
 
-- [ ] `store_creates_schema_and_indexes` (RED → GREEN)
-- [ ] `store_writer_persists_session_without_blocking` (RED → GREEN)
-- [ ] `retention_purges_notes_keeps_sessions` (RED → GREEN)
-- [ ] `debt_amount_is_computed_from_created_at` (RED → GREEN)
-- [ ] `penalty_entry_accepts_negative_seconds` (RED → GREEN)
+- [x] `store_creates_schema_and_indexes` (RED → GREEN)
+- [x] `store_writer_persists_session_without_blocking` (RED → GREEN)
+- [x] `retention_purges_notes_keeps_sessions` (RED → GREEN)
+- [x] `debt_amount_is_computed_from_created_at` (RED → GREEN)
+- [x] `penalty_entry_accepts_negative_seconds` (RED → GREEN)
 
 ---
 
