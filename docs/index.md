@@ -11,7 +11,7 @@ Mapa de navegación de la documentación del proyecto. Este es el **índice úni
 | Plan de fases POR FEATURE | `docs/phases.md` | Fases con scope, criterios de salida, pasos TDD |
 | Aprendizaje | `docs/learning/` | Conceptos por fase (`phase-NN-name.md`) |
 | Progreso (log) | `docs/progress-log/` | Historial por fase (`phase-NN-name.md`) |
-| Decisiones | `docs/adr/` | ADRs 001–008 (`ADR-0NN-*.md`) |
+| Decisiones | `docs/adr/` | ADRs 001–009 (`ADR-0NN-*.md`) |
 | Arquitectura | `docs/architecture.md` | Crates, puertos, IPC, modelo de datos, testing, CI |
 
 ## Fuera de docs

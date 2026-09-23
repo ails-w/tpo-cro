@@ -227,6 +227,6 @@ Resumen — el detalle vive en `docs/adr/`.
 | Puertos/adaptadores (hexagonal) | `ADR-003-hexagonal-ports.md` |
 | Modos de reloj, contrato y penalizaciones | `ADR-004-clock-modes-and-penalties.md` |
 | Crate `tpt-cli` | `ADR-005-tpt-cli-crate.md` |
-| Branching y protección de ramas | `ADR-006-branching-and-protection.md` |
+| Branching y resincronización de `dev` | `ADR-009-branching-and-dev-resync.md` |
 | Pivote a *timer-first* | `ADR-007-timer-first-pivot.md` |
 | Presencia: idle, pantalla apagada y power | `ADR-008-presence-and-penalties.md` |

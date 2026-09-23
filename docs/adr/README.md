@@ -11,9 +11,10 @@ Los ADR (*Architecture Decision Records*) registran las decisiones técnicas imp
 | `ADR-003-hexagonal-ports.md` | Puertos/adaptadores (arquitectura hexagonal) |
 | `ADR-004-clock-modes-and-penalties.md` | Modos de reloj, contrato y penalizaciones |
 | `ADR-005-tpt-cli-crate.md` | Crate `tpt-cli` (control/report/import/daemon) |
-| `ADR-006-branching-and-protection.md` | Branching (`dev`/`main`) y protección de ramas |
+| `ADR-006-branching-and-protection.md` | Branching (`dev`/`main`) y protección de ramas · **reemplazado por ADR-009** |
 | `ADR-007-timer-first-pivot.md` | Pivote a *timer-first* (retira el tracking pasivo) |
 | `ADR-008-presence-and-penalties.md` | Presencia: idle, pantalla apagada y suspensión |
+| `ADR-009-branching-and-dev-resync.md` | Branching (`dev`/`main`) y **resincronización de `dev`** |
 
 ## Cuándo escribir un ADR
 
