@@ -10,7 +10,7 @@
 
 ## ⏭️ CONTINUAR ACÁ
 
-**Fase 2 cerrada en `dev`** (features 2.1–2.5 + corrección, 6 commits). PR `dev → main` pendiente de abrir.
+**Fase 2 cerrada** (features 2.1–2.5 + corrección + docs, 7 commits). **PR #5 abierta** (`feat/phase-2-store → main`), CI verde — ver MÓDULO: Git.
 
 **Siguiente: Fase 3 — Actividades, proyectos, tags, agenda y cola.**
 
@@ -55,7 +55,7 @@ Al terminar 3.1–3.5: actualizar `docs/learning/phase-03-activities.md`, `docs/
 | | |
 |---|---|
 | **Fase activa** | Fase 3 — Actividades, proyectos, tags, agenda y cola |
-| **Última completada** | Fase 2 — Store SQLite (código y docs en `dev`; PR a `main` pendiente) |
+| **Última completada** | Fase 2 — Store SQLite (PR #5 abierta hacia `main`, CI verde) |
 | **Progreso** | Fase 2 ✅: features 2.1–2.5 + corrección. 27 tests en `tpt-core`, 24 en `tpt-daemon` (1 `#[ignore]` de disco real). fmt/clippy/test verdes. Fase 3 sin comenzar. |
 
 ## MÓDULO: Pivote de alcance (2026-09)
@@ -121,6 +121,8 @@ La app dejó de ser un **monitor pasivo de ventanas** y pasó a ser un **gestor 
 
 - Remoto: `origin` → `github.com:ails-w/tpo-cro` (HTTPS; la llave SSH está registrada pero tiene passphrase).
 - Flujo: `feat/* → dev → main` (`ADR-006`). **Las Fases 1 y 2 se trabajaron directo sobre `dev`** a pedido del usuario.
-- **La PR de Fase 1 se mergeó con rebase**: `main` tiene los mismos 7 commits con hashes nuevos. Por eso `origin/dev` quedó con los hashes viejos y el push de la Fase 2 necesita `--force-with-lease` (una sola vez).
-- **Pendiente inmediato**: PR `dev → main` con el cierre de Fase 2.
-- Ramas: `dev` (trabajo), `main` (estable).
+- **La PR de Fase 1 se mergeó con rebase**: `main` tiene los mismos 7 commits con hashes nuevos. Por eso `origin/dev` quedó con los hashes viejos, divergente de `main`.
+- ⚠️ **`dev` no acepta force-push** (regla del repo, verificada). Consecuencia: la Fase 2 se subió como rama `feat/phase-2-store` y su PR va **directo a `main`** (`feat/* → main`).
+- **PR #5 abierta**: `feat/phase-2-store → main`, 17 archivos / +3206 / −93, CI verde, mergeable.
+- **Deuda de ramas**: `origin/dev` sigue en `7ce1c15` (hashes pre-rebase, contenido ya presente en `main`). Opciones: (a) habilitar temporalmente el force-push y alinearla con `main`; (b) mergear `main` en `dev` (deja un merge commit y duplica commits en el historial); (c) dejarla y trabajar con `feat/*` por fase. **Decisión pendiente del usuario.**
+- Ramas: `dev` (trabajo), `main` (estable), `feat/phase-2-store` (esta fase).
