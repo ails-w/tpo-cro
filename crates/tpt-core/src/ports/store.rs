@@ -19,8 +19,13 @@ pub trait Store {
     fn save_contract(&mut self, contract: &CommitmentContract) -> Result<i64, StoreError>;
     fn load_active_contract(&self) -> Result<Option<CommitmentContract>, StoreError>;
 
-    /// Blocks until everything enqueued so far has reached disk, returning (and
-    /// clearing) the first deferred writer error, if there was one.
+    /// Blocks until everything enqueued so far has been applied to the
+    /// database, returning (and clearing) the first deferred writer error, if
+    /// there was one.
+    ///
+    /// With `synchronous = NORMAL` this means the writes are committed (for
+    /// example, appended to the WAL); it does not force an fsync of the
+    /// underlying storage.
     ///
     /// Adapters that write synchronously may implement this as a no-op.
     fn flush(&mut self) -> Result<(), StoreError>;

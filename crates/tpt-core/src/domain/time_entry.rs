@@ -102,7 +102,36 @@ pub fn activity_total_seconds(entries: &[TimeEntry], activity_id: i64) -> i64 {
 
 #[cfg(test)]
 mod tests {
-    use super::{TimeEntry, activity_total_seconds};
+    use super::{TimeEntry, TimeEntrySource, activity_total_seconds};
+    use crate::error::DomainError;
+
+    #[test]
+    fn time_entry_rejects_negative_seconds_outside_penalty() {
+        let error = TimeEntry::new(7, TimeEntrySource::Manual, -60, "2026-09-21", 1_700_000_000)
+            .expect_err("a MANUAL entry cannot carry negative seconds");
+
+        match error {
+            DomainError::NegativeSeconds { source, seconds } => {
+                assert_eq!(source, TimeEntrySource::Manual);
+                assert_eq!(seconds, -60);
+            }
+        }
+    }
+
+    #[test]
+    fn penalty_time_entry_accepts_negative_seconds() {
+        let entry = TimeEntry::new(
+            7,
+            TimeEntrySource::Penalty,
+            -300,
+            "2026-09-21",
+            1_700_000_000,
+        )
+        .expect("a PENALTY entry may carry negative seconds");
+
+        assert_eq!(entry.source, TimeEntrySource::Penalty);
+        assert_eq!(entry.seconds, -300);
+    }
 
     #[test]
     fn manual_time_entry_adds_to_activity_total() {
