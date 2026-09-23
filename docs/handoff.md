@@ -10,7 +10,7 @@
 
 ## ⏭️ CONTINUAR ACÁ
 
-**Fase 2 cerrada** (features 2.1–2.5 + corrección + docs, 7 commits). **PR #5 abierta** (`feat/phase-2-store → main`), CI verde — ver MÓDULO: Git.
+**Fase 2 cerrada y ya mergeada en `main`** (PR #5, merge rebase). `dev` quedó resincronizada. **PR `dev → main` abierta** con el cambio de estrategia de ramas (`ADR-009`) — ver MÓDULO: Git.
 
 **Siguiente: Fase 3 — Actividades, proyectos, tags, agenda y cola.**
 
@@ -120,9 +120,15 @@ La app dejó de ser un **monitor pasivo de ventanas** y pasó a ser un **gestor 
 ## MÓDULO: Git
 
 - Remoto: `origin` → `github.com:ails-w/tpo-cro` (HTTPS; la llave SSH está registrada pero tiene passphrase).
-- Flujo: `feat/* → dev → main` (`ADR-006`). **Las Fases 1 y 2 se trabajaron directo sobre `dev`** a pedido del usuario.
-- **La PR de Fase 1 se mergeó con rebase**: `main` tiene los mismos 7 commits con hashes nuevos. Por eso `origin/dev` quedó con los hashes viejos, divergente de `main`.
-- ⚠️ **`dev` no acepta force-push** (regla del repo, verificada). Consecuencia: la Fase 2 se subió como rama `feat/phase-2-store` y su PR va **directo a `main`** (`feat/* → main`).
-- **PR #5 abierta**: `feat/phase-2-store → main`, 17 archivos / +3206 / −93, CI verde, mergeable.
-- **Deuda de ramas**: `origin/dev` sigue en `7ce1c15` (hashes pre-rebase, contenido ya presente en `main`). Opciones: (a) habilitar temporalmente el force-push y alinearla con `main`; (b) mergear `main` en `dev` (deja un merge commit y duplica commits en el historial); (c) dejarla y trabajar con `feat/*` por fase. **Decisión pendiente del usuario.**
-- Ramas: `dev` (trabajo), `main` (estable), `feat/phase-2-store` (esta fase).
+- Flujo: **`dev → main`** (`ADR-009`, que reemplaza a `ADR-006`). Se trabaja **directo sobre `dev`**; no hay ramas `feat/*` por defecto.
+- **Ciclo de fase**: trabajar en `dev` → PR `dev → main` con merge **rebase** → **resincronizar `dev`**:
+  ```bash
+  git fetch origin
+  git reset --hard origin/main
+  git push --force-with-lease origin dev
+  ```
+  ⚠️ El tercer paso es obligatorio: el rebase-merge reescribe los hashes en `main`, así que sin el reset `dev` queda divergente y el próximo push directo se rechaza.
+- `dev` **permite force-push** (se le quitó `non_fast_forward` en el ruleset `protect-dev`); `main` no, y conserva PR obligatorio + check `fmt + clippy + test`.
+- **Estado verificado (2026-09-23)**: la PR de Fase 2 se mergeó con rebase (`main` = `17243a5`); `dev` se reseteó a `main` y se le re-aplicó encima el cambio de `ADR-009`. La PR abierta lleva **solo** ese cambio documental.
+- ⚠️ **`dev` compartida + force-push es riesgoso**: si el proyecto suma un segundo desarrollador, revisar `ADR-009`.
+- Ramas: `dev` (trabajo), `main` (estable).

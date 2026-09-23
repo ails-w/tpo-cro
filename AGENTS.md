@@ -57,7 +57,7 @@ No escribas código de implementación sin antes haber creado y fallado el test 
 
 - **Commits convencionales en inglés**: `feat:`, `fix:`, `test:`, `docs:`, `refactor:`, `chore:`.
 - **REGLA — commit después de cada FEATURE:** al cerrar cada feature (test RED → GREEN → refactor), hacer un commit convencional de esa feature. No acumular.
-- **REGLA — PR después de cada FASE terminada:** al completar una fase (criterios de salida cumplidos + log + learning + handoff actualizados), abrir una PR de revisión. Flujo de ramas: `feat/* → dev → main` (ver `docs/adr/ADR-006-branching-and-protection.md`).
+- **REGLA — PR después de cada FASE terminada:** al completar una fase (criterios de salida cumplidos + log + learning + handoff actualizados), abrir una PR de revisión. Flujo de ramas: `dev → main`, y al mergear **resincronizar `dev` con `main`** (ver `docs/adr/ADR-009-branching-and-dev-resync.md`).
 - **NUNCA** añadir "Co-Authored-By" ni atribución IA.
 - DoD de una feature: test RED que pasa (GREEN) + refactor + aprendizaje documentado en `docs/learning/phase-NN-name.md` + `docs/handoff.md` actualizado + commit convencional.
 

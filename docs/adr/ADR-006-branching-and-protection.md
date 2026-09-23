@@ -1,6 +1,6 @@
 # ADR-006: Branching y Protección de Ramas
 
-- **Estado**: Aceptado
+- **Estado**: Reemplazado por `ADR-009-branching-and-dev-resync.md`
 - **Fecha**: 2026-09-14
 
 ## Contexto
