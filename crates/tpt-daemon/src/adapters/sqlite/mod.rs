@@ -1082,6 +1082,52 @@ mod tests {
     }
 
     #[test]
+    fn penalty_entry_accepts_negative_seconds() {
+        let (_dir, mut store) = open_temp_store();
+        let activity_id = store
+            .save_activity(&sample_activity("Penalties", 1_700_000_000))
+            .unwrap();
+        store.flush().unwrap();
+
+        let penalty = TimeEntry::new(
+            activity_id,
+            TimeEntrySource::Penalty,
+            -300,
+            "2026-09-20",
+            1_700_000_000,
+        )
+        .unwrap();
+        let id = store.save_time_entry(&penalty).unwrap();
+        store.flush().unwrap();
+
+        let entries = store.list_time_entries(activity_id).unwrap();
+        let loaded = entries.iter().find(|entry| entry.id == Some(id)).unwrap();
+        assert_eq!(loaded.source, TimeEntrySource::Penalty);
+        assert_eq!(loaded.seconds, -300);
+    }
+
+    #[test]
+    fn time_entries_check_rejects_negative_non_penalty_seconds() {
+        let (_dir, mut store) = open_temp_store();
+        let activity_id = store
+            .save_activity(&sample_activity("Checks", 1_700_000_000))
+            .unwrap();
+        store.flush().unwrap();
+
+        let connection = store.reader.lock().unwrap();
+        let result = connection.execute(
+            "INSERT INTO time_entries (activity_id, source, seconds, day, created_at) \
+             VALUES (?1, 'MANUAL', -1, '2026-09-20', datetime('now'))",
+            [activity_id],
+        );
+
+        assert!(
+            result.is_err(),
+            "the CHECK must reject a negative non-penalty entry"
+        );
+    }
+
+    #[test]
     fn retention_with_zero_days_is_a_no_op() {
         let (_dir, mut store) = open_temp_store();
         let activity_id = store
