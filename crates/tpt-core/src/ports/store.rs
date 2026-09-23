@@ -18,4 +18,10 @@ pub trait Store {
     fn list_open_debts(&self, activity_id: i64) -> Result<Vec<Debt>, StoreError>;
     fn save_contract(&mut self, contract: &CommitmentContract) -> Result<i64, StoreError>;
     fn load_active_contract(&self) -> Result<Option<CommitmentContract>, StoreError>;
+
+    /// Blocks until everything enqueued so far has reached disk, returning (and
+    /// clearing) the first deferred writer error, if there was one.
+    ///
+    /// Adapters that write synchronously may implement this as a no-op.
+    fn flush(&mut self) -> Result<(), StoreError>;
 }
