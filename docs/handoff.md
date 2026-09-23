@@ -4,27 +4,29 @@
 > Historial por fase → `docs/progress-log/`. Conceptos → `docs/learning/`.
 > Aprendizajes y decisiones persistentes → Engram (memoria).
 
-**Última actualización**: 2026-09-21
+**Última actualización**: 2026-09-23
 
 ---
 
 ## ⏭️ CONTINUAR ACÁ
 
-**Fase 1 cerrada en `dev`** (features 1.1–1.5, 6 commits). Falta abrir la PR `dev → main` (ver MÓDULO: Git).
+**Fase 2 cerrada en `dev`** (features 2.1–2.5 + corrección, 6 commits). PR `dev → main` pendiente de abrir.
 
-**Siguiente: Fase 2 — Store SQLite.**
+**Siguiente: Fase 3 — Actividades, proyectos, tags, agenda y cola.**
 
-### Orden de trabajo (Fase 2)
+### Orden de trabajo (Fase 3)
 
 | # | Feature | Test RED (nombre exacto) | Archivo destino |
 |---|---------|--------------------------|-----------------|
-| 2.1 | Esquema e inicialización | `store_creates_schema_and_indexes` | `crates/tpt-daemon/src/adapters/` |
-| 2.2 | Hilo escritor MPSC | `store_writer_persists_session_without_blocking` | `crates/tpt-daemon/src/adapters/` |
-| 2.3 | Retención de notas | `retention_purges_notes_keeps_sessions` | `crates/tpt-daemon/src/adapters/` |
-| 2.4 | Deuda por cálculo | `debt_amount_is_computed_from_created_at` | `crates/tpt-daemon/src/adapters/` |
-| 2.5 | Penalización negativa | `penalty_entry_accepts_negative_seconds` | `crates/tpt-daemon/src/adapters/` |
+| 3.1 | Recurrencia L-V | `schedule_weekdays_matches_only_weekdays` | `crates/tpt-core/src/domain/schedule.rs` |
+| 3.2 | Rango de fechas | `schedule_range_excludes_dates_outside` | `crates/tpt-core/src/domain/schedule.rs` |
+| 3.3 | Cola del día | `queue_builds_from_schedule_and_pending` | `crates/tpt-core/src/domain/` + consultas en el store |
+| 3.4 | Manual rechazado en TIMER | `manual_entry_rejected_when_tracking_mode_is_timer` | `crates/tpt-core/src/domain/` |
+| 3.5 | Manual suma al total | `manual_entry_is_marked_and_sums_to_total` | `crates/tpt-core/src/domain/` |
 
-Antes de codear: crear `docs/learning/phase-02-store.md` y `docs/progress-log/phase-02-store.md`.
+Antes de codear: crear `docs/learning/phase-03-activities.md` y `docs/progress-log/phase-03-activities.md`.
+
+**Deuda técnica que esta fase probablemente salde**: `Store` no expone `projects` ni `tags` (las tablas existen desde la Fase 2); el CRUD los necesita.
 
 ### Reglas que no se negocian
 
@@ -35,16 +37,16 @@ Antes de codear: crear `docs/learning/phase-02-store.md` y `docs/progress-log/ph
 
 ### Especificación de referencia (leer antes de codear)
 
-- `docs/adr/ADR-002-sqlite-schema.md` → esquema completo, `CHECK`s, índices y reglas de datos.
-- `docs/adr/ADR-001-architecture-ipc-persistence.md` + `docs/architecture.md` (Persistencia y BTRFS) → `chattr +C`, WAL, checkpoint, `auto_vacuum`.
-- `docs/adr/ADR-003-hexagonal-ports.md` → `Store` es el puerto a implementar (`SqliteStore`); los fakes viven en `tpt-core::testing`.
-- `docs/adr/ADR-004-clock-modes-and-penalties.md` §6 → qué se calcula (crecimiento y vencimiento de deuda) en vez de persistirse.
-- `docs/phases.md` (Fase 2) → scope, criterios de salida y features.
-- `docs/learning/phase-01-domain.md` → decisiones que el adaptador debe respetar (timestamps `i64`, enums `SCREAMING_SNAKE_CASE`).
+- `docs/phases.md` (Fase 3) → scope, criterios de salida y features.
+- `docs/adr/ADR-004-clock-modes-and-penalties.md` §9 → `timer` vs `manual`: la única diferencia es si se puede cargar tiempo a mano.
+- `docs/adr/ADR-002-sqlite-schema.md` → `activities`, `projects`, `tags`, `activity_tags`, `schedule_rule` (JSON), `pending_extra_ratio`; el `CHECK` de `time_entries` ya limita el signo.
+- `docs/adr/ADR-003-hexagonal-ports.md` → `Store` es el puerto a extender (proyectos y tags todavía no están expuestos).
+- `docs/learning/phase-02-store.md` → cómo escribir en el store: `save_*` asigna el id sin I/O, `flush()` antes de leer, nunca `INSERT OR REPLACE`.
+- `docs/learning/phase-01-domain.md` → modelos ya definidos (`ScheduleRule` tiene las 4 formas pero **sin comportamiento**: la Fase 3 lo implementa).
 
 ### Cierre de fase
 
-Al terminar 2.1–2.5: actualizar `docs/learning/phase-02-store.md`, `docs/progress-log/phase-02-store.md`, `docs/handoff.md`, `docs/phases.md` y abrir PR `dev → main`.
+Al terminar 3.1–3.5: actualizar `docs/learning/phase-03-activities.md`, `docs/progress-log/phase-03-activities.md`, `docs/handoff.md`, `docs/phases.md` y abrir PR `dev → main`.
 
 ---
 
@@ -52,9 +54,9 @@ Al terminar 2.1–2.5: actualizar `docs/learning/phase-02-store.md`, `docs/progr
 
 | | |
 |---|---|
-| **Fase activa** | Fase 2 — Store SQLite |
-| **Última completada** | Fase 1 — Dominio, config y puertos (código en `dev`; PR a `main` pendiente) |
-| **Progreso** | Fase 1 ✅: features 1.0–1.5 cerradas, 16 tests en `tpt-core`, fmt/clippy/test verdes. Fase 2 sin comenzar. |
+| **Fase activa** | Fase 3 — Actividades, proyectos, tags, agenda y cola |
+| **Última completada** | Fase 2 — Store SQLite (código y docs en `dev`; PR a `main` pendiente) |
+| **Progreso** | Fase 2 ✅: features 2.1–2.5 + corrección. 27 tests en `tpt-core`, 24 en `tpt-daemon` (1 `#[ignore]` de disco real). fmt/clippy/test verdes. Fase 3 sin comenzar. |
 
 ## MÓDULO: Pivote de alcance (2026-09)
 
@@ -95,7 +97,12 @@ La app dejó de ser un **monitor pasivo de ventanas** y pasó a ser un **gestor 
 - ⚠️ **Hibernación no disponible**: el swap es **zram (4 GB)**, que no puede contener una imagen de hibernación. Por eso la acción de suspensión se cambió a `suspend` plano.
 - ⚠️ **logind `IdleHint`/`LockedHint` inservibles**: `CanIdle=yes` y `CanLock=yes`, pero **nadie llama** `SetIdleHint()`/`SetLockedHint()` (quickshell no habla D-Bus). Verificado con `loginctl show-session`.
 - ⚠️ **El compromiso es autoimpuesto**: sin tracking de apps, el escape real (navegador, celular) no está cubierto. Decisión consciente (`ADR-007`), no un pendiente.
-- ⚠️ **BTRFS + SQLite**: sin `chattr +C` en el directorio de la DB hay write amplification por CoW. Aplicar **antes** de crear la DB.
+- ⚠️ **BTRFS + SQLite**: sin `chattr +C` en el directorio de la DB hay write amplification por CoW. Aplicar **antes** de crear la DB. ✅ Ya aplicado y verificado: `~/.local/share/tpt` y `metrics.db` tienen el atributo `C`.
+- ⚠️ **`auto_vacuum` va antes del primer `CREATE TABLE`**: si la DB ya tiene tablas, cambiarlo exige un `VACUUM` completo, prohibido en BTRFS.
+- ⚠️ **`flush()` no es `fsync`**: con `synchronous=NORMAL` garantiza commit en WAL, no supervivencia a un corte de energía. No leerle más de lo que promete.
+- ℹ️ **Ids asignados en el cliente**: `save_*` devuelve el id sin tocar el disco y el contador por tabla avanza con `max(counter, id_explicito)`. Supuesto: **un solo proceso escritor** (el daemon). Si alguna fase agrega `DELETE`, revisar el seed `MAX(id)`.
+- ℹ️ **`:memory:` no está soportado**: el store abre dos conexiones (lectura y escritura) y verían dos bases distintas. Los tests usan archivos temporales.
+- ℹ️ **`rusqlite` con `bundled`**: compila SQLite desde fuente. Alarga el primer build, pero no depende del SQLite del sistema.
 - ⚠️ **Bajo consumo de memoria**: no agregar tokio ni dependencias pesadas. Por eso se descartó D-Bus (`ADR-008`).
 - ℹ️ **Scope `workflow` de GitHub**: el token OAuth de `gh` no puede pushear **ni mergear** PRs que toquen `.github/workflows/`. Usar SSH, o un PAT con permiso Workflows (`ADR-006`). La PR #2 ya se cerró; el gotcha sigue vigente para cualquier PR que toque el CI.
 - ℹ️ **`thiserror` y el campo `source`**: cualquier campo con ese nombre se trata como la causa del error. Por eso `TimeEntrySource` implementa `Error`. Si aparece otro error de dominio con un campo `source`, renombrarlo antes de pelear con la macro.
@@ -113,7 +120,7 @@ La app dejó de ser un **monitor pasivo de ventanas** y pasó a ser un **gestor 
 ## MÓDULO: Git
 
 - Remoto: `origin` → `github.com:ails-w/tpo-cro` (HTTPS; la llave SSH está registrada pero tiene passphrase).
-- Flujo: `feat/* → dev → main` (`ADR-006`). **Fase 1 se trabajó directo sobre `dev`** a pedido del usuario.
-- **Sin PRs abiertas.** `main` y `dev` venían del mismo commit (`2f56409`); la Fase 1 agregó 6 commits a `dev`.
-- **Pendiente inmediato**: abrir PR `dev → main` con el cierre de Fase 1.
+- Flujo: `feat/* → dev → main` (`ADR-006`). **Las Fases 1 y 2 se trabajaron directo sobre `dev`** a pedido del usuario.
+- **La PR de Fase 1 se mergeó con rebase**: `main` tiene los mismos 7 commits con hashes nuevos. Por eso `origin/dev` quedó con los hashes viejos y el push de la Fase 2 necesita `--force-with-lease` (una sola vez).
+- **Pendiente inmediato**: PR `dev → main` con el cierre de Fase 2.
 - Ramas: `dev` (trabajo), `main` (estable).
