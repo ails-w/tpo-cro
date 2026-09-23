@@ -8,3 +8,11 @@ license.workspace = true
 
 [lints]
 workspace = true
+
+[dependencies]
+rusqlite = { version = "0.40", features = ["bundled"] }
+serde_json = { workspace = true }
+tpt-core = { path = "../tpt-core" }
+
+[dev-dependencies]
+tempfile = "3"

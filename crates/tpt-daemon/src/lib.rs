@@ -2,6 +2,8 @@
 
 #![cfg_attr(test, allow(clippy::unwrap_used, clippy::expect_used, clippy::panic))]
 
+pub mod adapters;
+
 /// Returns the version of the `tpt-daemon` crate.
 #[must_use]
 pub fn version() -> &'static str {
